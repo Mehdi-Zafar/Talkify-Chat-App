@@ -1,0 +1,47 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  font-family: "Poppins", serif;
+}
+
+body {
+  @apply bg-lightBody dark:bg-darkBody;
+}
+
+/* .form-label {
+  @apply block text-sm font-medium leading-6 text-gray-900;
+}
+
+.form-input {
+  @apply block w-full rounded-md border-0 px-4 py-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-1 focus:ring-inset focus:ring-gray-400 outline-none sm:text-sm sm:leading-6;
+}
+
+.form-btn {
+  @apply flex w-full justify-center rounded-md bg-primary px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600;
+} */
+
+/* For WebKit browsers (Chrome, Edge, Safari) */
+::-webkit-scrollbar {
+  width: 4px; /* Set the width for vertical scrollbar */
+  height: 6px; /* Set the height for horizontal scrollbar */
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-lightBg dark:bg-darkBg rounded;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-lightPrimary dark:bg-darkPrimary rounded;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-[#2a52be];
+}
+
+/* For Firefox */
+ {
+  scrollbar-width: thin; /* Make scrollbar thin */
+  scrollbar-color: #2a52be #f0f0f0; /* Thumb color and track color */
+}
