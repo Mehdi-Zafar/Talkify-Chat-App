@@ -16,7 +16,7 @@ const authenticateUser = (req: Request, res: Response, next: NextFunction) => {
     const token = authHeader.split(" ")[1];
 
     // Verify the token
-    const secretKey = process.env.JWT_SECRET_KEY as string;
+    const secretKey = process.env.JWT_SECRET as string;
     if (!secretKey) {
       throw new Error("JWT secret key is not defined in environment variables");
     }

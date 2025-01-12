@@ -1,4 +1,5 @@
 export { default as InputField } from "./InputField/InputField";
+export { default as TextareaField } from "./TextareaField/TextareaField";
 export { default as SelectField } from "./SelectField/SelectField";
 export { default as PhoneNumberField } from "./PhoneNumberField/PhoneNumberField";
 export { default as ButtonComp } from "./ButtonComp/ButtonComp";

@@ -2,9 +2,9 @@ import { Navigate, Outlet } from "react-router-dom";
 import { useAuthStore } from "../zustand";
 
 export default function ProtectedRoutes() {
-  const { isLoggedIn } = useAuthStore();
+  const { isLoggedIn, loading } = useAuthStore();
 
-  if (!isLoggedIn) {
+  if (!isLoggedIn && !loading) {
     return <Navigate to="/sign-in" />;
   }
   return (

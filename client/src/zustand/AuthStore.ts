@@ -2,7 +2,7 @@ import { create } from "zustand";
 import httpClient from "../api/httpClient";
 import { AuthCredentials } from "../utils/contracts";
 import { AuthAPI } from "../api";
-
+import useUserStore from "./UserStore";
 interface AuthStore {
   accessToken: string | null;
   isLoggedIn: boolean;
@@ -24,6 +24,7 @@ const useAuthStore = create<AuthStore>((set, get) => ({
   initializeAuth: async () => {
     try {
       await get().refreshAccessToken(); // Call refresh token method on app load
+      await useUserStore.getState().getUserProfile();
       set({ loading: false });
     } catch (error) {
       set({ isLoggedIn: false, loading: false });

@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import bcrypt from "bcryptjs";
 import { prisma } from "..";
+import jwt from "jsonwebtoken";
 
 export const createUser = async (
   req: Request,
@@ -68,6 +69,9 @@ export const getUserById = async (
   next: NextFunction
 ): Promise<void> => {
   try {
+    if (isNaN(parseInt(req.params.id))) {
+      next();
+    }
     const user = await prisma.users.findUnique({
       where: { id: parseInt(req.params.id, 10) },
     });
@@ -107,5 +111,56 @@ export const deleteUser = async (
     res.status(204).send();
   } catch (err) {
     next(err);
+  }
+};
+
+export const getUserProfile = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const token = req.cookies?.refreshTokenTalkify;
+
+    if (!token) {
+      res.status(400).json({ success: false, message: "Token is required" });
+      return;
+    }
+
+    const secretKey = process.env.JWT_SECRET as string;
+    console.log(secretKey);
+    // Decode the token to extract the user ID
+    const decoded = jwt.verify(token, secretKey) as { id: number };
+
+    if (!decoded || !decoded.id) {
+      res.status(400).json({ success: false, message: "Invalid token" });
+      return;
+    }
+
+    console.log(`ID is ${decoded.id}`);
+
+    // Fetch user using the ID
+    const user = await prisma.users.findUnique({
+      where: { id: parseInt(decoded.id.toString()) },
+      select: {
+        id: true,
+        email: true,
+        user_name: true,
+      },
+    });
+
+    if (!user) {
+      res.status(404).json({ success: false, message: "User not found" });
+      return;
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "User fetched successfully",
+      data: user,
+    });
+  } catch (error) {
+    console.error("Error decoding token or fetching user:", error);
+    res.status(500).json({ success: false, message: "Internal server error" });
   }
 };
