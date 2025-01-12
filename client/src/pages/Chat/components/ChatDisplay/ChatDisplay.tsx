@@ -9,9 +9,17 @@ import {
   MenuItem,
   Typography,
 } from "@material-tailwind/react";
+import { useEffect } from "react";
+// import { socket } from "../../../../utils/helper";
 
 export default function ChatDisplay() {
   const { id } = useParams();
+
+  // useEffect(() => {
+  //   if (id) {
+  //     socket.emit("joinChat", id);
+  //   }
+  // }, [id]);
   return (
     <div className="h-full">
       {id ? (
@@ -54,9 +62,6 @@ export default function ChatDisplay() {
                   className="w-10 h-10"
                 />
                 <div className="grid">
-                  <h5 className="text-gray-900 text-sm font-semibold leading-snug pb-1">
-                    Shanay cruz
-                  </h5>
                   <div className="w-max grid">
                     <div className="px-3.5 py-2 bg-lightBg dark:bg-darkBg rounded justify-start  items-center gap-3 inline-flex">
                       <h5 className="text-lightText dark:text-darkText text-sm font-medium leading-snug">

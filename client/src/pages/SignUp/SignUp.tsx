@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   ButtonComp,
   InputField,
@@ -8,7 +8,7 @@ import {
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   Step,
   Stepper,
@@ -21,12 +21,23 @@ import {
 import { isPhoneValid, showToast } from "../../utils/helper";
 import signUpImg from "../../assets/sign-up.jpg";
 import { LockClosedIcon, PencilIcon } from "@heroicons/react/24/outline";
+import { AuthAPI } from "../../api";
+import { User } from "../../utils/contracts";
+import OtpInput from "react-otp-input";
+import { sendOtp, verifyOtp } from "../../api/OtpAPI/OtpAPI";
 
 const FormSchema = z
   .object({
-    username: z.string().min(1, { message: "Username is required" }),
+    user_name: z.string().min(1, { message: "Username is required" }),
     email: z.string().min(1, { message: "Email is required" }).email(),
-    password: z.string().min(1, { message: "Password is required" }),
+    password: z
+      .string()
+      .min(8, { message: "Password must be at least 8 characters long" })
+      .regex(/[0-9]/, { message: "Password must include at least one number" })
+      .regex(/[^A-Za-z0-9]/, {
+        message: "Password must include at least one special character",
+      })
+      .nonempty({ message: "Password is required" }),
     confirm_password: z.string().min(1, { message: "Password is required" }),
     gender: z.string().min(1, { message: "Gender is required" }),
     phone_number: z
@@ -47,50 +58,69 @@ export default function SignUp() {
     handleSubmit,
     getValues,
     trigger,
+    reset,
     formState: { errors },
   } = useForm({ mode: "onChange", resolver: zodResolver(FormSchema) });
-  const [activeStep, setActiveStep] = useState(0);
-  const [isLastStep, setIsLastStep] = useState(false);
-  const [isFirstStep, setIsFirstStep] = useState(true);
   const [openModal, setOpenModal] = useState(false);
-  const [fieldsDisabled, setFieldsDisabled] = useState(true);
+  const [otp, setOtp] = useState("");
+  const formRef = useRef<HTMLFormElement>(null);
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const handleOpen = () => setOpenModal((prev) => !prev);
 
-  const handleNext = async () => {
-    if (
-      (activeStep === 0 && (await trigger(["username", "email"]))) ||
-      (activeStep === 1 && (await trigger(["gender", "phone_number"])))
-    ) {
-      setActiveStep((cur) => cur + 1);
-    } else if (
-      activeStep === 2 &&
-      (await trigger(["password", "confirmPassword"]))
-    ) {
-      handleOpen();
-    }
-  };
-  const handlePrev = () => !isFirstStep && setActiveStep((cur) => cur - 1);
-
-  function formSubmit(data: any) {
-    console.log(data);
+  async function formSubmit(data: User) {
+    const otpres = await verifyOtp({ email: getValues("email"), otp });
+    const res = await AuthAPI.register(data);
     showToast("Sign Up Successful!");
+    reset();
     handleOpen();
+    setTimeout(() => {
+      navigate("/sign-in");
+    }, 1000);
+  }
+
+  async function sendOtpOnEmail() {
+    setLoading(true);
+    try {
+      const email = getValues("email");
+      const res = await sendOtp({ email: getValues("email") });
+      showToast("OTP sent to our email.");
+      handleOpen();
+    } catch (err) {
+      console.log(err);
+    }
+    setLoading(false);
+  }
+
+  // async function verifyEmailOtp() {
+  //   try {
+  //     const res = await verifyOtp({ email: getValues("email"), otp });
+  //     showToast("OTP Verified");
+  //   } catch (err) {
+  //     showToast("Error");
+  //   }
+  // }
+
+  function submitForm() {
+    otp?.length < 6
+      ? showToast("Fill the numbers completely!")
+      : formRef.current.requestSubmit();
   }
 
   return (
     <>
       <div className="h-screen py-8 flex justify-center">
-        <div className="flex h-full w-11/12 rounded-xl overflow-clip justify-center shadow-md border border-gray-50 dark:border-darkPrimary">
-          <div className="w-3/5">
+        <div className="w-4/5 rounded-xl overflow-clip justify-center shadow-sm border border-gray-50 dark:border-darkPrimary">
+          {/* <div className="w-2/5">
             <img
               src={signUpImg}
               alt="Sign In Wallpaper"
               className="w-full h-full object-cover"
             />
-          </div>
-          <div className="w-2/5 flex min-h-full flex-1 flex-col justify-center px-6 py-12 lg:px-8 bg-gray-50 dark:bg-darkBg">
-            <div className="sm:mx-auto sm:w-full sm:max-w-sm flex flex-col items-center gap-4">
+          </div> */}
+          <div className="w-full min-h-full flex-1 px-6 py-8 lg:px-8 bg-gray-50 dark:bg-darkBg">
+            <div className="w-full flex flex-col items-center gap-4">
               <span className="bg-lightPrimary dark:bg-darkPrimary w-12 h-12 rounded-full flex justify-center">
                 <LockClosedIcon width={24} stroke="white" />
               </span>
@@ -99,101 +129,57 @@ export default function SignUp() {
               </h2>
             </div>
 
-            <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-sm">
+            <div className="mt-8 w-full max-w-screen-md mx-auto">
               <form>
-                <div className="space-y-3">
-                  <Stepper
-                    className="mb-8"
-                    activeStep={activeStep}
-                    isLastStep={(value) => setIsLastStep(value)}
-                    isFirstStep={(value) => setIsFirstStep(value)}
-                  >
-                    <Step
-                      className={`${
-                        activeStep >= 0 &&
-                        "!bg-lightPrimary dark:!bg-darkPrimary text-white"
-                      }`}
-                      // onClick={() => setActiveStep(0)}
-                    >
-                      1
-                    </Step>
-                    <Step
-                      className={`${
-                        activeStep >= 1 &&
-                        "!bg-lightPrimary dark:!bg-darkPrimary !text-white"
-                      } text-lightText`}
-                      // onClick={() => setActiveStep(1)}
-                    >
-                      2
-                    </Step>
-                    <Step
-                      className={`${
-                        activeStep >= 2 &&
-                        "!bg-lightPrimary dark:!bg-darkPrimary !text-white"
-                      } text-lightText`}
-                      // onClick={() => setActiveStep(2)}
-                    >
-                      3
-                    </Step>
-                  </Stepper>
-                  {activeStep === 0 ? (
-                    <>
-                      <InputField
-                        label="Username"
-                        name="username"
-                        placeholder="Enter Username"
-                        register={{ ...register("username") }}
-                        error={errors["username"]}
-                      />
-                      <InputField
-                        label="Email"
-                        name="email"
-                        placeholder="Enter Email"
-                        register={{ ...register("email") }}
-                        error={errors["email"]}
-                      />
-                    </>
-                  ) : activeStep === 1 ? (
-                    <>
-                      <PhoneNumberField
-                        label="Phone Number"
-                        name="phone_number"
-                        placeholder="Enter Phone Number"
-                        value={getValues("phone_number")}
-                        register={{ ...register("phone_number") }}
-                        error={errors["phone_number"]}
-                      />
-                      <SelectField
-                        label="Gender"
-                        options={[
-                          { label: "Male", value: "male" },
-                          { label: "Female", value: "female" },
-                        ]}
-                        placeholder="Select Gender"
-                        register={{ ...register("gender") }}
-                        error={errors["gender"]}
-                      />
-                    </>
-                  ) : activeStep === 2 ? (
-                    <>
-                      <InputField
-                        label="Password"
-                        name="password"
-                        type="password"
-                        placeholder="Enter Password"
-                        register={{ ...register("password") }}
-                        error={errors["password"]}
-                      />
-                      <InputField
-                        label="Confirm Password"
-                        name="confirm_password"
-                        type="password"
-                        placeholder="Enter Confirm Password"
-                        register={{ ...register("confirm_password") }}
-                        error={errors["confirm_password"]}
-                      />
-                    </>
-                  ) : null}
+                <div className="grid grid-cols-2 gap-4">
+                  <InputField
+                    label="Username"
+                    name="user_name"
+                    placeholder="Enter Username"
+                    register={{ ...register("user_name") }}
+                    error={errors["user_name"]}
+                  />
+                  <InputField
+                    label="Email"
+                    name="email"
+                    placeholder="Enter Email"
+                    register={{ ...register("email") }}
+                    error={errors["email"]}
+                  />
+                  <PhoneNumberField
+                    label="Phone Number"
+                    name="phone_number"
+                    placeholder="Enter Phone Number"
+                    value={getValues("phone_number")}
+                    register={{ ...register("phone_number") }}
+                    error={errors["phone_number"]}
+                  />
+                  <SelectField
+                    label="Gender"
+                    options={[
+                      { label: "Male", value: "male" },
+                      { label: "Female", value: "female" },
+                    ]}
+                    placeholder="Select Gender"
+                    register={{ ...register("gender") }}
+                    error={errors["gender"]}
+                  />
+                  <InputField
+                    label="Password"
+                    name="password"
+                    type="password"
+                    placeholder="Enter Password"
+                    register={{ ...register("password") }}
+                    error={errors["password"]}
+                  />
+                  <InputField
+                    label="Confirm Password"
+                    name="confirm_password"
+                    type="password"
+                    placeholder="Enter Confirm Password"
+                    register={{ ...register("confirm_password") }}
+                    error={errors["confirm_password"]}
+                  />
                 </div>
                 <Dialog
                   open={openModal}
@@ -201,120 +187,67 @@ export default function SignUp() {
                   size="lg"
                   className="px-2 relative bg-lightBg dark:bg-darkBg"
                 >
-                  <span
-                    className="absolute top-2 right-2 cursor-pointer w-8 h-8 flex justify-center items-center border rounded-md border-primary"
-                    onClick={() => setFieldsDisabled(false)}
-                  >
-                    <PencilIcon width={16} />
-                  </span>
                   <DialogHeader className="text-lightText dark:text-darkText">
-                    Review Fields
+                    Verify OTP
                   </DialogHeader>
-                  <form onSubmit={handleSubmit(formSubmit)}>
-                    <DialogBody className="grid grid-cols-2 gap-4">
-                      <InputField
-                        label="Username"
-                        name="username"
-                        placeholder="Enter Username"
-                        register={{ ...register("username") }}
-                        error={errors["username"]}
-                        disabled={fieldsDisabled}
-                      />
-                      <InputField
-                        label="Email"
-                        name="email"
-                        placeholder="Enter Email"
-                        register={{ ...register("email") }}
-                        error={errors["email"]}
-                        disabled={fieldsDisabled}
-                      />
-                      <PhoneNumberField
-                        label="Phone Number"
-                        name="phone_number"
-                        placeholder="Enter Phone Number"
-                        value={getValues("phone_number")}
-                        register={{ ...register("phone_number") }}
-                        error={errors["phone_number"]}
-                        disabled={fieldsDisabled}
-                      />
-                      <SelectField
-                        label="Gender"
-                        options={[
-                          { label: "Male", value: "male" },
-                          { label: "Female", value: "female" },
-                        ]}
-                        placeholder="Select Gender"
-                        register={{ ...register("gender") }}
-                        error={errors["gender"]}
-                        disabled={fieldsDisabled}
-                      />
-                      <InputField
-                        label="Password"
-                        name="password"
-                        type="password"
-                        placeholder="Enter Password"
-                        register={{ ...register("password") }}
-                        error={errors["password"]}
-                        disabled={fieldsDisabled}
-                      />
-                      <InputField
-                        label="Confirm Password"
-                        name="confirm_password"
-                        type="password"
-                        placeholder="Enter Confirm Password"
-                        register={{ ...register("confirm_password") }}
-                        error={errors["confirm_password"]}
-                        disabled={fieldsDisabled}
-                      />
+                  <form ref={formRef} onSubmit={handleSubmit(formSubmit)}>
+                    <DialogBody>
+                      <div className="flex flex-col gap-4 items-center justify-center my-8">
+                        <OtpInput
+                          value={otp}
+                          onChange={setOtp}
+                          numInputs={6}
+                          renderSeparator={<span>&nbsp;-&nbsp;</span>}
+                          renderInput={(props) => (
+                            <input
+                              {...props}
+                              className="!w-12 !h-12 rounded-md bg-lightBody dark:bg-darkBody !text-lightText dark:!text-darkText border text-lg font-semibold"
+                            />
+                          )}
+                        />
+                        <h3 className="font-medium">
+                          We have sent an otp to your email address{" "}
+                          {getValues("email")}. Please verify!
+                        </h3>
+                      </div>
                     </DialogBody>
                     <DialogFooter>
-                      <Button
-                        variant="text"
-                        color="blue"
-                        type="button"
-                        onClick={handleOpen}
-                        className="mr-1"
-                      >
-                        <span>Cancel</span>
-                      </Button>
-                      <Button
-                        variant="gradient"
-                        color="blue"
-                        type="submit"
-                        // onClick={() => {
-                        //   handleOpen();
-                        // }}
-                      >
-                        <span>Confirm</span>
-                      </Button>
+                      <>
+                        <Button
+                          variant="text"
+                          color="blue"
+                          type="button"
+                          onClick={() => setOpenModal(false)}
+                          className="mr-1"
+                        >
+                          <span>Cancel</span>
+                        </Button>
+                        <Button
+                          variant="gradient"
+                          color="blue"
+                          onClick={() => {
+                            formRef ? submitForm() : {};
+                          }}
+                        >
+                          <span>Confirm</span>
+                        </Button>
+                      </>
                     </DialogFooter>
                   </form>
                 </Dialog>
                 <div className="mt-6 flex items-center gap-4">
-                  {!isFirstStep && (
-                    <ButtonComp
-                      label="Previous"
-                      type="button"
-                      onClick={handlePrev}
-                    />
-                  )}
-                  {!isLastStep && (
-                    <ButtonComp
-                      label="Next"
-                      type="button"
-                      onClick={handleNext}
-                    />
-                  )}
-                  {isLastStep && (
-                    <ButtonComp
-                      type="button"
-                      onClick={handleNext}
-                      label="Review"
-                    />
-                  )}
+                  <ButtonComp
+                    label="Sign Up"
+                    type="button"
+                    onClick={async () => {
+                      if (await trigger()) {
+                        await sendOtpOnEmail();
+                      }
+                    }}
+                    loading={loading}
+                  />
                 </div>
               </form>
-
               <p className="mt-6 text-center text-sm text-gray-500">
                 Already a member?{" "}
                 <Link

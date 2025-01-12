@@ -4,8 +4,13 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ButtonComp, InputField } from "../../components";
 import signInImg from "../../assets/sign-in.jpg";
+import logoImg from "../../assets/logo.png";
 import { LockClosedIcon } from "@heroicons/react/24/outline";
 import { showToast } from "../../utils/helper";
+import { AuthCredentials } from "../../utils/contracts";
+import { AuthAPI } from "../../api";
+import { useAuthStore } from "../../zustand";
+import { useMutation } from "@tanstack/react-query";
 
 const FormSchema = z.object({
   email: z.string().min(1, { message: "Email is required" }).email(),
@@ -19,10 +24,15 @@ export default function SignIn() {
     reset,
     formState: { errors },
   } = useForm({ resolver: zodResolver(FormSchema) });
+  const { login } = useAuthStore();
+  const { mutateAsync, isPending } = useMutation({
+    mutationFn: (data: AuthCredentials) => {
+      return login(data);
+    },
+  });
 
-  function formSubmit(data: any) {
-    console.log(data);
-    showToast("Sign In Successful!");
+  async function formSubmit(data: AuthCredentials) {
+    const res = await mutateAsync(data);
     reset();
   }
 
@@ -65,7 +75,7 @@ export default function SignIn() {
               />
 
               <div>
-                <ButtonComp label="Sign in" type="submit" />
+                <ButtonComp label="Sign in" type="submit" loading={isPending} />
               </div>
             </form>
             <div className="text-sm mt-2 flex justify-end">
@@ -85,6 +95,11 @@ export default function SignIn() {
                 Create an Account
               </Link>
             </p>
+            {/* <img
+              src={logoImg}
+              alt="Sign In Wallpaper"
+              className="w-24 object-cover mx-auto block mt-8"
+            /> */}
           </div>
         </div>
       </div>

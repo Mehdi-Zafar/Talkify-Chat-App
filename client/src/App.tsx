@@ -1,11 +1,15 @@
 import { RouterProvider } from "react-router-dom";
 import { router } from "./routes";
-import { useThemeStore } from "./zustand";
-import { useEffect } from "react";
+import { useAuthStore, useThemeStore } from "./zustand";
+import { useEffect, useLayoutEffect } from "react";
 import { Theme } from "./utils/contracts";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+
+const queryClient = new QueryClient();
 
 function App() {
   const { theme } = useThemeStore();
+  const { initializeAuth } = useAuthStore();
 
   useEffect(() => {
     const root = window.document.documentElement;
@@ -16,7 +20,15 @@ function App() {
       root.classList.remove("dark");
     }
   }, [theme]);
-  return <RouterProvider router={router}></RouterProvider>;
+
+  useLayoutEffect(() => {
+    initializeAuth();
+  }, []);
+  return (
+    <QueryClientProvider client={queryClient}>
+      <RouterProvider router={router}></RouterProvider>
+    </QueryClientProvider>
+  );
 }
 
 export default App;
