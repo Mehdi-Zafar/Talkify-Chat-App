@@ -1,7 +1,8 @@
 import { Request, Response, NextFunction } from "express";
 import bcrypt from "bcryptjs";
-import { prisma } from "..";
+import { prisma, supabase } from "..";
 import jwt from "jsonwebtoken";
+import multer from "multer";
 
 export const createUser = async (
   req: Request,
@@ -164,3 +165,62 @@ export const getUserProfile = async (
     res.status(500).json({ success: false, message: "Internal server error" });
   }
 };
+
+export const updateUserData = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { username, about } = req.body;
+    const file = req.file; // Assuming multer is used for handling file uploads
+
+    let publicUrl = null;
+
+    // If a file is uploaded, process the image
+    if (file) {
+      const fileName = `${Date.now()}-${file.originalname}`;
+      const { data, error } = await supabase.storage
+        .from("Files")
+        .upload(fileName, file.buffer, {
+          contentType: file.mimetype,
+          upsert: false,
+        });
+
+      if (error) {
+        console.error("Supabase Upload Error:", error.message);
+        res.status(500).json({ message: "Failed to upload image." });
+        return;
+      }
+
+      // Generate public URL for the uploaded file
+      const urlResponse = supabase.storage.from("Files").getPublicUrl(fileName);
+      publicUrl = urlResponse?.data?.publicUrl;
+    }
+
+    // Update user data in the database
+    // Replace this section with your database update logic
+    const updatedUserData = {
+      username,
+      about,
+      imageUrl: publicUrl,
+    };
+
+    // Simulate database update
+    console.log("User data updated:", updatedUserData);
+
+    res.status(200).json({
+      message: "User data updated successfully.",
+      data: updatedUserData,
+    });
+  } catch (error) {
+    console.error("Error in updateUserData:", "error");
+    res.status(500).json({ message: "An unexpected error occurred." });
+  }
+};
+
+// Configure Multer for File Uploads
+// const upload = multer({
+//   storage: multer.memoryStorage(), // Store file in memory for direct upload
+//   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB file size limit
+// });

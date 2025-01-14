@@ -10,3 +10,16 @@ export const getUserProfile = async () => {
     throw error;
   }
 };
+
+export const updateUserData = async (userData) => {
+  try {
+    const formData = new FormData();
+    formData.append("image", userData?.image); // Replace `selectedFile` with the actual file object
+    formData.append("username", userData?.username);
+    formData.append("about", userData?.about);
+    const res = await httpClient.post("/users/upload-user-data", formData);
+    return res.data;
+  } catch (error) {
+    throw error;
+  }
+};

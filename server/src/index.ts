@@ -13,11 +13,18 @@ import authRoutes from "./routes/authRoutes";
 import otpRoutes from "./routes/otpRoutes";
 import errorHandler from "./middleware/errorHandler";
 import cookieParser from "cookie-parser";
+import { createClient } from "@supabase/supabase-js";
 
 dotenv.config();
 
 // Initialize Prisma Client
 export const prisma = new PrismaClient();
+
+// Configure Supabase
+export const supabase = createClient(
+  process.env.SUPABASE_URL || "",
+  process.env.SUPABASE_API_KEY || ""
+);
 
 const app: Application = express();
 const server = createServer(app);
