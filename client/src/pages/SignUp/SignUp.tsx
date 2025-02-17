@@ -22,7 +22,7 @@ import { isPhoneValid, showToast } from "../../utils/helper";
 import signUpImg from "../../assets/sign-up.jpg";
 import { LockClosedIcon, PencilIcon } from "@heroicons/react/24/outline";
 import { AuthAPI } from "../../api";
-import { User } from "../../utils/contracts";
+import { Purpose, User } from "../../utils/contracts";
 import OtpInput from "react-otp-input";
 import { sendOtp, verifyOtp } from "../../api/OtpAPI/OtpAPI";
 
@@ -38,7 +38,9 @@ const FormSchema = z
         message: "Password must include at least one special character",
       })
       .nonempty({ message: "Password is required" }),
-    confirm_password: z.string().min(1, { message: "Password is required" }),
+    confirm_password: z
+      .string()
+      .min(1, { message: "Confirm Password is required" }),
     gender: z.string().min(1, { message: "Gender is required" }),
     phone_number: z
       .string()
@@ -70,7 +72,11 @@ export default function SignUp() {
   const handleOpen = () => setOpenModal((prev) => !prev);
 
   async function formSubmit(data: User) {
-    const otpres = await verifyOtp({ email: getValues("email"), otp });
+    const otpres = await verifyOtp({
+      email: getValues("email"),
+      otp,
+      purpose: Purpose.SignUp,
+    });
     const res = await AuthAPI.register(data);
     showToast("Sign Up Successful!");
     reset();

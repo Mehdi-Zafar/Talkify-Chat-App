@@ -5,3 +5,7 @@ export { default as PhoneNumberField } from "./PhoneNumberField/PhoneNumberField
 export { default as ButtonComp } from "./ButtonComp/ButtonComp";
 export { default as Header } from "./Header/Header";
 export { default as ThemeToggleButton } from "./ThemeToggleButton/ThemeToggleButton";
+export { default as NewChatModal } from "./NewChatModal/NewChatModal";
+export { default as NewGroupChatModal } from "./NewGroupChatModal/NewGroupChatModal";
+export { default as SearchInput } from "./SearchInput/SearchInput";
+export { default as CountdownTimer } from "./CountdownTimer/CountdownTimer";

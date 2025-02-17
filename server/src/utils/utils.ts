@@ -1,3 +1,5 @@
+import { Token } from "./models";
+
 export const generateOtp = (length: number = 6): string => {
   const digits = "0123456789";
   let otp = "";
@@ -7,4 +9,8 @@ export const generateOtp = (length: number = 6): string => {
   }
 
   return otp;
+};
+
+export const getTokenName = (name: Token) => {
+  return `${name}Talkify`;
 };

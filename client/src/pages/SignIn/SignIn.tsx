@@ -79,12 +79,12 @@ export default function SignIn() {
               </div>
             </form>
             <div className="text-sm mt-2 flex justify-end">
-              <a
-                href="#"
+              <Link
+                to="/forgot-password"
                 className="font-semibold text-indigo-600 hover:text-indigo-500"
               >
                 Forgot password?
-              </a>
+              </Link>
             </div>
             <p className="mt-10 text-center text-sm text-gray-500">
               Not a member?{" "}

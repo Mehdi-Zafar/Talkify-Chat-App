@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { prisma } from "..";
 import { sendEmail } from "../middleware/nodemailer";
+import { getHashSalt } from "../utils/constants";
 
 export const loginUser = async (
   req: Request,
@@ -88,7 +89,7 @@ export const registerUser = async (
     }
 
     // Hash the password
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, getHashSalt());
 
     // Create a new user
     const user = await prisma.users.create({

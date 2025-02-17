@@ -7,6 +7,7 @@ export const createChat = async (
   next: NextFunction
 ): Promise<void> => {
   try {
+    console.log(req.body);
     const chat = await prisma.chats.create({ data: req.body });
     res.status(201).json(chat);
   } catch (err) {
@@ -41,6 +42,27 @@ export const getChatById = async (
       return;
     }
     res.status(200).json(chat);
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const getChatByUserId = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const chats = await prisma.chats.findMany({
+      where: { members: { has: Number(req.params.id) } },
+    });
+    if (!chats) {
+      res.status(404).json({ message: "Chat not found" });
+      return;
+    }
+    res
+      .status(200)
+      .json({ message: "User Chats fetched succesfully!", data: chats });
   } catch (err) {
     next(err);
   }

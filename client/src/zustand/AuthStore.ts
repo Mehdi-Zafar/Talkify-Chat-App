@@ -40,6 +40,7 @@ const useAuthStore = create<AuthStore>((set, get) => ({
         accessToken: response.token,
         isLoggedIn: true,
       });
+      await useUserStore.getState().getUserProfile();
     } catch (error) {
       throw error;
     }

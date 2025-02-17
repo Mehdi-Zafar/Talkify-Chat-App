@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
+import { Navigate } from "react-router-dom";
 import { io } from "socket.io-client";
 
 export default function Home() {
@@ -7,29 +8,31 @@ export default function Home() {
   const [msg, setMsg] = useState("");
   const [messages, setMessages] = useState([]);
 
-  useEffect(() => {
-    socket.on("connect", () => {
-      console.log("connected", socket.id);
-      setSocketId(socket.id);
-    });
+  return <Navigate to="/sign-in" />;
 
-    socket.on("receive", (data) => {
-      setMessages((prev) => [...prev, data]);
-    });
-  }, []);
+  // useEffect(() => {
+  //   socket.on("connect", () => {
+  //     console.log("connected", socket.id);
+  //     setSocketId(socket.id);
+  //   });
 
-  function sendMsg(e) {
-    e.preventDefault();
-    if (msg) {
-      socket.emit("message", msg);
-      setMessages((prev) => [...prev, msg]);
-      setMsg("");
-    }
-  }
+  //   socket.on("receive", (data) => {
+  //     setMessages((prev) => [...prev, data]);
+  //   });
+  // }, []);
+
+  // function sendMsg(e) {
+  //   e.preventDefault();
+  //   if (msg) {
+  //     socket.emit("message", msg);
+  //     setMessages((prev) => [...prev, msg]);
+  //     setMsg("");
+  //   }
+  // }
 
   return (
     <div>
-      <h1>React Chat App</h1>
+      {/* <h1>React Chat App</h1>
       <h5>{socketId}</h5>
       <form onSubmit={sendMsg}>
         <input
@@ -46,7 +49,7 @@ export default function Home() {
             <li>{message}</li>
           ))}
         </ul>
-      </div>
+      </div> */}
     </div>
   );
 }

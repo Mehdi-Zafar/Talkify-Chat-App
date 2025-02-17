@@ -59,6 +59,7 @@ export default function Profile() {
   const [preview, setPreview] = useState("");
 
   useEffect(() => {
+    console.log(user);
     setValue("username", user?.user_name);
   }, [user?.id]);
 
@@ -70,7 +71,7 @@ export default function Profile() {
 
   async function onSubmit(data) {
     try {
-      const res = await UsersAPI.updateUserData(data);
+      const res = await UsersAPI.updateUserData(data, user?.id);
     } catch (err) {}
   }
   return (
@@ -83,7 +84,7 @@ export default function Profile() {
           <div className="relative">
             <div className="w-fit mx-auto relative flex justify-center">
               <img
-                src={preview ? preview : maleAvatar}
+                src={preview ? preview : user?.image ? user?.image : maleAvatar}
                 alt=""
                 className="w-40 h-40 object-cover rounded-full shadow-md"
               />

@@ -7,9 +7,11 @@ import {
   Cog6ToothIcon,
 } from "@heroicons/react/24/outline";
 import { useNavigate } from "react-router-dom";
+import { useUserStore } from "../../zustand";
 
 export default function Header() {
   const navigate = useNavigate();
+  const { user } = useUserStore();
   return (
     <nav className="bg-lightPrimary dark:bg-darkPrimary py-4 px-2 flex flex-col justify-between items-center">
       <div className=" flex flex-col justify-center items-center gap-4">
@@ -41,7 +43,7 @@ export default function Header() {
             onClick={() => navigate("/profile")}
           >
             <img
-              src={avatarImg}
+              src={user?.image}
               alt="Avatar"
               className="h-8 w-8 rounded-full object-cover"
             />

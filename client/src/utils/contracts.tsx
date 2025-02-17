@@ -1,3 +1,5 @@
+import { boolean } from "zod";
+
 export enum Theme {
   LIGHT = "light",
   DARK = "dark",
@@ -49,9 +51,30 @@ export class OtpRequest {
 export class OtpVerifyRequest {
   email: string;
   otp: string;
+  purpose: Purpose;
 }
 
 export class OtpResponse {
   message: string;
   success: boolean;
+  data?: OtpResponseData;
+}
+
+export class OtpResponseData {
+  timeOut?: number;
+}
+
+export enum Purpose {
+  SignUp = "signUp",
+  ResetPassword = "resetPassword",
+}
+
+export class ResetPasswordPayload {
+  email: string;
+  password: string;
+}
+
+export enum UserRelationType {
+  CONTACT = "contact",
+  NON_CONTACT = "non-contact",
 }
