@@ -102,6 +102,7 @@ export default function ResetPassword() {
           <InputField
             placeholder="Enter Password"
             containerClass="block w-full"
+            type="password"
             label="Password"
             register={{ ...register("password") }}
             error={errors["password"]}
@@ -109,6 +110,7 @@ export default function ResetPassword() {
           <InputField
             placeholder="Enter Password"
             containerClass="block w-full"
+            type="password"
             label="Confirm Password"
             register={{ ...register("confirm_password") }}
             error={errors["confirm_password"]}

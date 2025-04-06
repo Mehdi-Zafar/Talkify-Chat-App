@@ -31,7 +31,7 @@ import AboutSettings from "../pages/Settings/SettingsTabs/AboutSettings";
 
 const HeaderLayout = () => {
   return (
-    <div className="flex shrink-0 h-screen">
+    <div className="flex shrink-0 h-screen overflow-clip">
       <Header />
       <div className="flex-1">
         <Outlet />
@@ -66,6 +66,7 @@ export const router = createBrowserRouter(
       <Route element={<ProtectedRoutes />}>
         <Route element={<HeaderLayout />}>
           <Route path="/chat" element={<Chat />} />
+          <Route path="/chat/new" element={<Chat />} />
           <Route path="/chat/:id" element={<Chat />} />
           <Route path="/settings" element={<Settings />}>
             <Route index element={<Navigate to="/settings/account" />} />

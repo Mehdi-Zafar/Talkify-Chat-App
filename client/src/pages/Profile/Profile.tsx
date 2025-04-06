@@ -59,7 +59,6 @@ export default function Profile() {
   const [preview, setPreview] = useState("");
 
   useEffect(() => {
-    console.log(user);
     setValue("username", user?.user_name);
   }, [user?.id]);
 
@@ -111,7 +110,6 @@ export default function Profile() {
                 <input
                   type="file"
                   onChange={(event) => {
-                    console.log(event.target.files);
                     setValue("image", event.target.files[0]);
                     setPreview(URL.createObjectURL(event.target.files[0]));
                   }}

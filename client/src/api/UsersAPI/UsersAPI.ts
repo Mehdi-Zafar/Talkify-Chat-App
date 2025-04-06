@@ -17,7 +17,7 @@ export const getUsers = async () => {
 export const getUserProfile = async () => {
   try {
     const res = await httpClient.get(`${BASE_URL}/get/profile`, {
-      headers: { "hide-toast": true },
+      headers: { "hide-toast": true, "allow-before-auth": true },
     });
     return res.data;
   } catch (error) {
@@ -52,7 +52,9 @@ export const updateUserData = async (userData, id) => {
 
 export const resetPassword = async (payload: ResetPasswordPayload) => {
   try {
-    const res = await httpClient.post(`${BASE_URL}/reset-password`, payload);
+    const res = await httpClient.post(`${BASE_URL}/reset-password`, payload, {
+      headers: { "allow-before-auth": true },
+    });
     return res.data;
   } catch (error) {
     throw error;
@@ -61,11 +63,13 @@ export const resetPassword = async (payload: ResetPasswordPayload) => {
 
 export const getChatUsers = async (
   userId: number,
-  relationType: UserRelationType
+  relationType: UserRelationType,
+  search?: string
 ) => {
+  const searchKeyword = search ? `&searchKeyword=${search}` : "";
   try {
     const res = await httpClient.get(
-      `${BASE_URL}/chat/${userId}?relationType=${relationType}`
+      `${BASE_URL}/chat/${userId}?relationType=${relationType}${searchKeyword}`
     );
     return res.data;
   } catch (error) {

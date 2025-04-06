@@ -80,14 +80,19 @@ export default function NewGroupChatModal({ openModal, handleOpen }) {
   }
 
   function toggleMembers(user) {
-    setSelectedMembers((members) =>
-      members.find((member) => member?.id === user?.id)
-        ? members.filter((member) => member?.id !== user?.id)
-        : [...members, user]
-    );
-  }
+    setSelectedMembers((members) => {
+      // Check if the user is already in the list
+      const isUserPresent = members.some((member) => member?.id === user?.id);
 
-  console.log(selectedMembers);
+      // If the user is present, remove them
+      if (isUserPresent) {
+        return members.filter((member) => member?.id !== user?.id);
+      }
+
+      // If the user is not present, add them
+      return [...members, user];
+    });
+  }
 
   function onSubmit(data) {
     const chatInfo = new Chat();
@@ -117,13 +122,15 @@ export default function NewGroupChatModal({ openModal, handleOpen }) {
               error={errors["group_name"]}
             />
             {selectedMembers?.length > 0 && (
-              <div>
-                <h3>Members</h3>
-                <div className="flex items-center gap-4 flex-wrap">
+              <div className="mt-2">
+                <h3 className="block text-sm font-semibold leading-6 text-lightText dark:text-darkText">
+                  Members
+                </h3>
+                <div className="flex items-center gap-4 flex-wrap mt-2">
                   {selectedMembers?.map((member) => (
                     <div className="flex items-center gap-2">
                       <img
-                        src={member?.image}
+                        src={member?.image ? member?.image : maleAvatar}
                         className="w-6 h-6 rounded-full"
                       />
                       {member?.user_name}
@@ -132,13 +139,13 @@ export default function NewGroupChatModal({ openModal, handleOpen }) {
                 </div>
               </div>
             )}
-            <div className="mt-4 flex flex-col gap-4 max-h-[50vh]">
+            <div className="mt-4 flex flex-col gap-4">
               <Tabs value={activeTab}>
                 <TabsHeader
-                  className="rounded-none border-b border-blue-gray-50 bg-transparent p-0"
+                  className="rounded-none border-b border-blue-gray-50 dark:border-gray-900 bg-transparent p-0"
                   indicatorProps={{
                     className:
-                      "bg-transparent border-b-2 border-gray-900 shadow-none rounded-none",
+                      "bg-transparent border-b-2 border-gray-900 dark:border-gray-50 shadow-none rounded-none",
                   }}
                 >
                   {data.map(({ label, value }) => (
@@ -146,14 +153,14 @@ export default function NewGroupChatModal({ openModal, handleOpen }) {
                       key={value}
                       value={value}
                       onClick={() => setActiveTab(value)}
-                      className={activeTab === value ? "text-gray-900" : ""}
+                      className={"text-lightText dark:text-darkText"}
                     >
                       {label}
                     </Tab>
                   ))}
                 </TabsHeader>
                 <TabsBody>
-                  <div className="mt-4 flex flex-col gap-4 h-[40vh] overflow-y-auto">
+                  <div className="mt-4 flex flex-col gap-4 max-h-[35vh] overflow-y-auto">
                     {users?.length > 0 ? (
                       users?.map((user) => (
                         <label
@@ -178,6 +185,11 @@ export default function NewGroupChatModal({ openModal, handleOpen }) {
                             }}
                             crossOrigin=""
                             onChange={() => toggleMembers(user)}
+                            checked={
+                              !!selectedMembers?.find(
+                                (member) => member?.id === user?.id
+                              )
+                            }
                           />
                         </label>
                       ))

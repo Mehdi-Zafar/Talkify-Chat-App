@@ -20,17 +20,19 @@ export class User {
 
 export class Chat {
   id: number;
-  name: string;
+  name: string | null;
   members: number[];
   creator_id: number;
   isGroupChat: boolean;
+  memberDetails?: User[];
+  messages: Message[];
 }
 
 export class Message {
   id: number;
   content: string;
   attachments: string[];
-  sender_id: number;
+  sender: User;
   chat_id: number;
 }
 
@@ -77,4 +79,13 @@ export class ResetPasswordPayload {
 export enum UserRelationType {
   CONTACT = "contact",
   NON_CONTACT = "non-contact",
+}
+
+export enum SocketEvent {
+  CONNECT = "connect",
+  DISCONNECT = "disconnect",
+  JOIN_CHAT = "joinChat",
+  SEND_MSG = "sendMsg",
+  RECEIVE_MSG = "receiveMsg",
+  CONNECT_ERROR = "connectError",
 }

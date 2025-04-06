@@ -5,11 +5,17 @@ import { useEffect, useLayoutEffect } from "react";
 import { Theme } from "./utils/contracts";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 function App() {
-  const { theme } = useThemeStore();
-  const { initializeAuth } = useAuthStore();
+  const theme = useThemeStore((state) => state.theme);
+  const initializeAuth = useAuthStore((state) => state.initializeAuth);
 
   useEffect(() => {
     const root = window.document.documentElement;

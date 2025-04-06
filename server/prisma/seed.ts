@@ -94,8 +94,6 @@ async function main() {
       },
     ],
   });
-
-  console.log("Seeding complete with additional data!");
 }
 
 main()

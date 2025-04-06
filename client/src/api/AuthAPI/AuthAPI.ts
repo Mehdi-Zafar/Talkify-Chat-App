@@ -3,7 +3,11 @@ import httpClient from "../httpClient";
 
 export const login = async (credentials: AuthCredentials) => {
   try {
-    const res = await httpClient.post<AuthResponse>("/auth/login", credentials);
+    const res = await httpClient.post<AuthResponse>(
+      "/auth/login",
+      credentials,
+      { headers: { "allow-before-auth": true } }
+    );
     return res.data;
   } catch (error) {
     throw error;
@@ -18,7 +22,9 @@ export const register = async (userData: User) => {
     user.gender = userData.gender;
     user.password = userData.password;
     user.phone_number = userData.phone_number;
-    const res = await httpClient.post("/auth/register", user);
+    const res = await httpClient.post("/auth/register", user, {
+      headers: { "allow-before-auth": true },
+    });
     return res.data;
   } catch (error) {
     throw error;
@@ -39,7 +45,7 @@ export const refreshAccessToken = async () => {
     const res = await httpClient.post(
       "/auth/refresh-token",
       {},
-      { headers: { "hide-toast": true } }
+      { headers: { "hide-toast": true, "allow-before-auth": true } }
     );
     return res.data;
   } catch (error) {

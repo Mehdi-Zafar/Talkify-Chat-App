@@ -7,21 +7,69 @@ import {
   MenuHandler,
   MenuList,
   MenuItem,
+  Spinner,
 } from "@material-tailwind/react";
-import { useEffect } from "react";
-// import { socket } from "../../../../utils/helper";
+import { useQuery } from "@tanstack/react-query";
+import { ChatAPI } from "@/api";
+import { useEffect, useState } from "react";
+import { useSocketStore, useUserStore } from "@/zustand";
+import { Message, SocketEvent } from "@/utils/contracts";
 
 export default function ChatDisplay() {
   const { id } = useParams();
+  const user = useUserStore((state) => state.user);
+  const joinChat = useSocketStore((state) => state.joinChat);
+  const socketEmit = useSocketStore((state) => state.emit);
+  const socket = useSocketStore((state) => state.socket);
+  const [newMsg, setNewMsg] = useState("");
+  const [messages, setMessages] = useState([]);
 
-  // useEffect(() => {
-  //   if (id) {
-  //     socket.emit("joinChat", id);
-  //   }
-  // }, [id]);
+  const { data: chat, isFetching: fetchingChats } = useQuery({
+    queryKey: ["chat", id],
+    queryFn: getChat,
+    enabled: !isNaN(Number(id)),
+  });
+
+  async function getChat() {
+    return await ChatAPI.getChatsByChatId(Number(id));
+  }
+  // Listen for new messages
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleNewMessage = (message) => {
+      setMessages((prev) => [...prev, message]);
+    };
+
+    socket.on(SocketEvent.RECEIVE_MSG, handleNewMessage);
+
+    return () => {
+      socket.off(SocketEvent.RECEIVE_MSG, handleNewMessage);
+    };
+  }, [socket]);
+
+  useEffect(() => {
+    joinChat(chat?.id);
+    setMessages(chat?.messages);
+  }, [!!chat?.id]);
+
+  function sendMessage() {
+    if (!newMsg) return;
+    const message = new Message();
+    message.chat_id = chat?.id;
+    message.sender = { id: user?.id, image: user?.image, ...message.sender };
+    message.content = newMsg;
+    socketEmit(SocketEvent.SEND_MSG, message);
+    setNewMsg("");
+  }
+
   return (
-    <div className="h-full">
-      {id ? (
+    <div className="h-screen">
+      {fetchingChats ? (
+        <div className="h-full flex justify-center items-center">
+          <Spinner color="blue" />
+        </div>
+      ) : id ? (
         <div className="flex flex-col justify-between h-full">
           <div className="w-full h-full flex flex-col justify-between">
             <div className="w-full flex justify-between items-center py-3 px-4 border-gray-50 dark:border-darkBg border-y bg-lightBg dark:bg-darkBg">
@@ -32,7 +80,7 @@ export default function ChatDisplay() {
                   className="h-10 w-10 rounded-full object-cover"
                 />
                 <h3 className="text-sm font-semibold text-lightText dark:text-darkText">
-                  David Hussey
+                  {chat?.name}
                 </h3>
               </div>
               <Menu>
@@ -53,52 +101,63 @@ export default function ChatDisplay() {
                 </MenuList>
               </Menu>
             </div>
-            <div className="p-4 overflow-auto flex-1">
-              <div className="flex gap-2.5 mb-4">
-                <img
-                  src="https://pagedone.io/asset/uploads/1710412177.png"
-                  alt="Shanay image"
-                  className="w-10 h-10"
-                />
-                <div className="grid">
-                  <div className="w-max grid">
-                    <div className="px-3.5 py-2 bg-lightBg dark:bg-darkBg rounded justify-start  items-center gap-3 inline-flex">
-                      <h5 className="text-lightText dark:text-darkText text-sm font-medium leading-snug">
-                        Guts, I need a review of work. Are you ready?
-                      </h5>
-                    </div>
-                    <div className="justify-end items-center inline-flex mb-2.5">
-                      <h6 className="text-gray-500 text-xs font-normal leading-4 py-1">
-                        05:14 PM
-                      </h6>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="flex gap-2.5 justify-end">
-                <div className="">
-                  <div className="grid mb-2">
-                    <h5 className="text-right text-gray-900 text-sm font-semibold leading-snug pb-1">
-                      You
-                    </h5>
-                    <div className="px-3 py-2 bg-lightPrimary dark:bg-darkPrimary rounded">
-                      <h2 className="text-darkText text-sm font-normal leading-snug">
-                        Yes, let’s see, send your work here
-                      </h2>
-                    </div>
-                    <div className="justify-start items-center inline-flex">
-                      <h3 className="text-gray-500 text-xs font-normal leading-4 py-1">
-                        05:14 PM
-                      </h3>
+            <div className="p-4 h-[80%] overflow-auto flex-1">
+              {messages?.map((message: Message) =>
+                message?.sender?.id !== user?.id ? (
+                  <div className="flex gap-2.5 mb-4">
+                    <img
+                      src={
+                        message?.sender?.image ||
+                        "https://pagedone.io/asset/uploads/1710412177.png"
+                      }
+                      alt="Shanay image"
+                      className="w-10 h-10 rounded-full"
+                    />
+                    <div className="grid">
+                      <div className="w-max grid">
+                        <div className="px-3.5 py-2 bg-lightBg dark:bg-darkBg rounded justify-start  items-center gap-3 inline-flex">
+                          <h5 className="text-lightText dark:text-darkText text-sm font-medium leading-snug">
+                            {message?.content}
+                          </h5>
+                        </div>
+                        <div className="justify-end items-center inline-flex mb-2.5">
+                          <h6 className="text-gray-500 text-xs font-normal leading-4 py-1">
+                            05:14 PM
+                          </h6>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
-                <img
-                  src="https://pagedone.io/asset/uploads/1704091591.png"
-                  alt="Hailey image"
-                  className="w-10 h-11"
-                />
-              </div>
+                ) : (
+                  <div className="flex gap-2.5 justify-end">
+                    <div className="">
+                      <div className="grid mb-2">
+                        <h5 className="text-right text-gray-900 text-sm font-semibold leading-snug pb-1">
+                          You
+                        </h5>
+                        <div className="px-3 py-2 bg-lightPrimary dark:bg-darkPrimary rounded">
+                          <h2 className="text-darkText text-sm font-normal leading-snug">
+                            {message?.content}
+                          </h2>
+                        </div>
+                        <div className="justify-start items-center inline-flex">
+                          <h3 className="text-gray-500 text-xs font-normal leading-4 py-1">
+                            05:14 PM
+                          </h3>
+                        </div>
+                      </div>
+                    </div>
+                    <img
+                      src={
+                        message?.sender?.image ||
+                        "https://pagedone.io/asset/uploads/1704091591.png"
+                      }
+                      alt="Hailey image"
+                      className="w-10 h-10 rounded-full"
+                    />
+                  </div>
+                )
+              )}
             </div>
             <div className="w-[95%] mx-auto mb-2 px-4 py-2 rounded-3xl border border-gray-200 dark:border-darkPrimary items-center gap-2 inline-flex justify-between">
               <div className="flex items-center gap-2 flex-1">
@@ -121,6 +180,8 @@ export default function ChatDisplay() {
                 <input
                   className="grow shrink basis-0 text-lightText dark:text-darkText bg-lightBg dark:bg-darkBg border dark:border-darkPrimary  rounded-md py-3 px-4 text-xs font-medium leading-4 focus:outline-none"
                   placeholder="Type here..."
+                  value={newMsg}
+                  onChange={(e) => setNewMsg(e.target.value)}
                 />
               </div>
 
@@ -161,7 +222,10 @@ export default function ChatDisplay() {
                     </g>
                   </g>
                 </svg>
-                <button className="items-center flex px-3 py-2 bg-lightPrimary dark:bg-darkPrimary rounded-full shadow ">
+                <button
+                  onClick={sendMessage}
+                  className="items-center flex px-3 py-2 bg-lightPrimary dark:bg-darkPrimary rounded-full shadow "
+                >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     width="16"

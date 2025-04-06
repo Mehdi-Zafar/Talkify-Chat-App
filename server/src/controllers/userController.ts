@@ -6,6 +6,7 @@ import multer from "multer";
 import { getTokenName } from "../utils/utils";
 import { Token, UserRelationType } from "../utils/models";
 import { getHashSalt } from "../utils/constants";
+import { Prisma } from "@prisma/client";
 
 export const createUser = async (
   req: Request,
@@ -332,6 +333,9 @@ export const getChatUsers = async (
 ): Promise<void> => {
   const userId = Number(req.params.id); // Current user ID
   const relationType = req.query.relationType;
+  const searchKeyword = req.query.searchKeyword
+    ? req.query.searchKeyword + ""
+    : "";
 
   if (isNaN(userId)) {
     res.status(400).json({ error: "Invalid User ID!" });
@@ -368,6 +372,16 @@ export const getChatUsers = async (
           AND: [
             { id: { not: userId } }, // Exclude self
             { id: { notIn: [...contactIdsSet] } }, // Exclude contacts
+            ...(searchKeyword
+              ? [
+                  {
+                    user_name: {
+                      contains: searchKeyword,
+                      mode: Prisma.QueryMode.insensitive,
+                    },
+                  },
+                ]
+              : []),
           ],
         },
         select: { id: true, user_name: true, image: true }, // Select only required fields

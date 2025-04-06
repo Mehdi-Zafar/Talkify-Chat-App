@@ -24,3 +24,14 @@ export const getChatsByUserId = async (id: number) => {
     throw error;
   }
 };
+
+export const getChatsByChatId = async (id: number): Promise<Chat> => {
+  try {
+    const res = await httpClient.get(`${BASE_URL}/${id}`, {
+      headers: { "hide-toast": true },
+    });
+    return res.data;
+  } catch (error) {
+    throw error;
+  }
+};

@@ -6,28 +6,33 @@ import useUserStore from "./UserStore";
 interface AuthStore {
   accessToken: string | null;
   isLoggedIn: boolean;
-  loading: boolean; // Indicates whether the app is initializing
-
-  // Methods
+  loading: boolean;
+  isInitialized: boolean;
+  pendingRequests: (() => void)[]; // Queue for pending API calls
   initializeAuth: () => Promise<void>;
-  login: (credentials: AuthCredentials) => Promise<void>;
+  resolvePendingRequests: () => void; // Resolve queued requests
   logout: () => Promise<void>;
   refreshAccessToken: () => Promise<void>;
+  login: (credentials: AuthCredentials) => Promise<void>;
 }
 
 const useAuthStore = create<AuthStore>((set, get) => ({
   accessToken: null,
   isLoggedIn: false,
-  loading: true, // Indicates whether the app is initializing
+  loading: true,
+  isInitialized: false,
+  pendingRequests: [],
 
   // Initialize authentication on app load
   initializeAuth: async () => {
     try {
       await get().refreshAccessToken(); // Call refresh token method on app load
       await useUserStore.getState().getUserProfile();
-      set({ loading: false });
     } catch (error) {
-      set({ isLoggedIn: false, loading: false });
+      set({ isLoggedIn: false });
+    } finally {
+      set({ isInitialized: true, loading: false });
+      get().resolvePendingRequests();
     }
   },
 
@@ -35,7 +40,6 @@ const useAuthStore = create<AuthStore>((set, get) => ({
   login: async (credentials: AuthCredentials) => {
     try {
       const response = await AuthAPI.login(credentials);
-      console.log(response.token);
       set({
         accessToken: response.token,
         isLoggedIn: true,
@@ -68,6 +72,11 @@ const useAuthStore = create<AuthStore>((set, get) => ({
       set({ isLoggedIn: false, accessToken: null });
       throw error;
     }
+  },
+
+  resolvePendingRequests: () => {
+    get().pendingRequests.forEach((resolve) => resolve());
+    set({ pendingRequests: [] });
   },
 }));
 

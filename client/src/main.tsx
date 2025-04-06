@@ -6,10 +6,10 @@ import { ThemeProvider } from "@material-tailwind/react";
 import { Toaster } from "react-hot-toast";
 
 createRoot(document.getElementById("root")!).render(
-  <StrictMode>
-    <ThemeProvider>
-      <App />
-      <Toaster />
-    </ThemeProvider>
-  </StrictMode>
+  // <StrictMode>
+  <ThemeProvider>
+    <App />
+    <Toaster />
+  </ThemeProvider>
+  // </StrictMode>
 );

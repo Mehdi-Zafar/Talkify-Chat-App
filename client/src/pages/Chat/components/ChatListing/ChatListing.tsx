@@ -1,38 +1,37 @@
 import { EllipsisVerticalIcon } from "@heroicons/react/24/outline";
 import { twMerge } from "tailwind-merge";
-import avatarImg from "../../../../assets/avatar.png";
+import avatarImg from "@/assets/avatar.png";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   ButtonComp,
   NewChatModal,
   NewGroupChatModal,
   SearchInput,
-} from "../../../../components";
+} from "@/components";
 import {
   Menu,
   MenuHandler,
   MenuItem,
   MenuList,
+  Spinner,
 } from "@material-tailwind/react";
 import { useState } from "react";
-import { useAuthStore, useUserStore } from "../../../../zustand";
+import { useAuthStore, useUserStore } from "@/zustand";
 import { useQuery } from "@tanstack/react-query";
-import { ChatAPI, UsersAPI } from "../../../../api";
-import { UserRelationType } from "../../../../utils/contracts";
-
-// const chats = [1, 2, 3, 4, 5, 6, 7, 8];
-// const chats = [];
+import { ChatAPI } from "@/api";
+import { Chat } from "@/utils/contracts";
 
 export default function ChatListing() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [openNewChat, setOpenNewChat] = useState(false);
   const [openNewGroupChat, setOpenNewGroupChat] = useState(false);
-  const { logout } = useAuthStore();
-  const { user } = useUserStore();
-  const { data: users } = useQuery({
+  const logout = useAuthStore((state) => state.logout);
+  const user = useUserStore((state) => state.user);
+  const { data: chats, isFetching: fetchingChats } = useQuery({
     queryKey: ["chats", user?.id],
     queryFn: getChats,
+    enabled: !isNaN(Number(user?.id)),
   });
 
   async function getChats() {
@@ -43,6 +42,10 @@ export default function ChatListing() {
       console.error(err);
       return [];
     }
+  }
+
+  function selectChat(chatId: number) {
+    navigate(`/chat/${chatId}`);
   }
 
   async function signOut() {
@@ -87,15 +90,20 @@ export default function ChatListing() {
         </div>
         <div></div>
         <div className="flex-1 overflow-auto py-4 px-4 space-y-4">
-          {users?.length > 0 ? (
-            users?.map((chat) => (
+          {fetchingChats ? (
+            <div className="h-full flex justify-center items-center">
+              <Spinner color="blue" />
+            </div>
+          ) : chats?.length > 0 ? (
+            chats?.map((chat: Chat) => (
               <div
+                key={chat?.id}
                 className={twMerge(
                   `py-3 px-4 bg-lightBg dark:bg-darkBg shadow-sm rounded-md flex justify-between cursor-pointer duration-500 text-lightText dark:text-darkText ease-in-out hover:bg-lightPrimary dark:hover:bg-darkPrimary hover:text-white`,
-                  id == chat.toString() &&
+                  id == chat?.id?.toString() &&
                     "bg-lightPrimary dark:bg-darkPrimary text-white"
                 )}
-                onClick={() => navigate(`/chat/${chat?.id}`)}
+                onClick={() => selectChat(chat?.id)}
               >
                 <div className="flex gap-3 items-center">
                   <img

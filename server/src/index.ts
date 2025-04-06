@@ -14,6 +14,7 @@ import otpRoutes from "./routes/otpRoutes";
 import errorHandler from "./middleware/errorHandler";
 import cookieParser from "cookie-parser";
 import { createClient } from "@supabase/supabase-js";
+import { Message, SocketEvent } from "./utils/models";
 
 dotenv.config();
 
@@ -30,22 +31,37 @@ const app: Application = express();
 const server = createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "*", // Adjust origin as per your frontend domain
+    origin: "http://localhost:5173",
     methods: ["GET", "POST"],
+    credentials: true,
+    allowedHeaders: ["my-custom-header"],
   },
+  allowEIO3: true,
 });
 
 const PORT = process.env.PORT || 3000;
 
+// Enhanced CORS middleware
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+    credentials: true,
+  })
+);
+
+// Security headers middleware
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Credentials", "true");
+  res.header(
+    "Access-Control-Allow-Headers",
+    "Origin, X-Requested-With, Content-Type, Accept"
+  );
+  next();
+});
+
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(
-  cors({
-    origin: "http://localhost:5173", // Frontend domain
-    credentials: true, // Allow cookies
-  })
-);
 app.use(cookieParser());
 app.use(helmet());
 app.use(morgan("dev"));
@@ -61,35 +77,33 @@ app.use("/api/otp", otpRoutes);
 app.use(errorHandler);
 
 // Socket.IO Events
-io.on("connection", (socket) => {
+io.on(SocketEvent.CONNECT, (socket) => {
   console.log(`User connected: ${socket.id}`);
 
   // const user = (socket as any).userDetails; // Retrieve authenticated user details
   // console.log(`Authenticated user: ${user.email}`);
 
-  socket.on("joinChat", (chatId) => {
-    socket.join(chatId);
+  socket.on(SocketEvent.JOIN_CHAT, (chatId) => {
+    socket.join(chatId.toString());
     console.log(`User joined chat room: ${chatId}`);
   });
 
-  // socket.on("sendMessage", async (data) => {
-  //   const { chatId, message } = data;
+  socket.on(SocketEvent.SEND_MSG, async (data: Message) => {
+    // Save the message to the database using Prisma
+    await prisma.messages.create({
+      data: {
+        content: data.content,
+        sender_id: data.sender.id,
+        chat_id: data.chat_id,
+      },
+    });
 
-  //   // Save the message to the database using Prisma
-  //   await prisma.messages.create({
-  //     data: {
-  //       content: message,
-  //       sender_id: user.id,
-  //       chat_id: chatId,
-  //     },
-  //   });
+    io.to(data.chat_id.toString()).emit(SocketEvent.RECEIVE_MSG, data);
+  });
 
-  //   io.to(chatId).emit("receiveMessage", message);
-  // });
-
-  // socket.on("disconnect", () => {
-  //   console.log(`User disconnected: ${socket.id}`);
-  // });
+  socket.on(SocketEvent.DISCONNECT, () => {
+    console.log(`User disconnected: ${socket.id}`);
+  });
 });
 
 // Handle Prisma disconnect on server shutdown
