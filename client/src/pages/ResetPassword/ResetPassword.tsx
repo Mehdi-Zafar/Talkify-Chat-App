@@ -5,7 +5,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { useMutation } from "@tanstack/react-query";
-import { UsersAPI } from "../../api";
+import { AuthAPI } from "../../api";
 import { ResetPasswordPayload } from "../../utils/contracts";
 import { useEffect, useState } from "react";
 
@@ -46,7 +46,7 @@ export default function ResetPassword() {
 
   const { mutateAsync, isPending } = useMutation({
     mutationFn: (data: ResetPasswordPayload) => {
-      return UsersAPI.resetPassword(data);
+      return AuthAPI.resetPassword(data);
     },
   });
 
