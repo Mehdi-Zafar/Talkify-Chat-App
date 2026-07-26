@@ -26,6 +26,12 @@ export class Chat {
   isGroupChat: boolean;
   memberDetails?: User[];
   messages: Message[];
+  updatedAt: string;
+  lastMessage?: {
+    content: string;
+    createdAt: Date;
+    isOwn: boolean;
+  } | null;
 }
 
 export class Message {
@@ -34,6 +40,7 @@ export class Message {
   attachments: string[];
   sender: User;
   chat_id: number;
+  createdAt: string;
 }
 
 export class AuthCredentials {
@@ -58,12 +65,7 @@ export class OtpVerifyRequest {
 
 export class OtpResponse {
   message: string;
-  success: boolean;
-  data?: OtpResponseData;
-}
-
-export class OtpResponseData {
-  timeOut?: number;
+  timeout: number;
 }
 
 export enum Purpose {
