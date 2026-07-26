@@ -1,105 +1,67 @@
 import { Request, Response, NextFunction } from "express";
-import { generateOtp, getTokenName } from "../utils/utils";
-import nodemailer from "nodemailer";
-import { prisma } from "..";
 import { sendEmail } from "../middleware/nodemailer";
-import { purposeReturnToken } from "../utils/constants";
-import jwt from "jsonwebtoken";
-import { token } from "morgan";
-import { Token } from "../utils/models";
+import * as OtpService from "../services/otpService";
+import { AppError } from "../errors/AppError";
+import { SendOtpBody, VerifyOtpBody } from "../types/requests";
+import {
+  OTP_EXPIRY_SECONDS,
+  RESET_TOKEN_EXPIRY_SECONDS,
+} from "../lib/constants";
+import { env } from "../config/env";
 
 export const sendOtp = async (
-  req: Request,
+  req: Request<{}, {}, SendOtpBody>,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
   try {
     const { email } = req.body;
+    const otp = await OtpService.createAndStoreOtp(email);
 
-    if (!email) {
-      res.status(400).json({ message: "Email is required" });
-      return;
+    // Email failure rolls back the OTP — user gets a clean error to retry
+    try {
+      await sendEmail(email, "Your OTP Code", `Your OTP code is: ${otp}`);
+    } catch (emailError) {
+      console.error("Failed to send OTP email:", emailError);
+      // Roll back the stored OTP so the user isn't stuck with an undelivered one
+      await OtpService.rollbackOtp(email);
+      throw new AppError(500, "Failed to send OTP email. Please try again.");
     }
-
-    // Generate OTP and expiry
-    const otp = generateOtp(6);
-    const timeInSec = 300;
-    const otpExpiry = Math.floor(Date.now() / 1000) + timeInSec; // 5 minutes in seconds
-
-    // Upsert OTP record
-    await prisma.userOtp.upsert({
-      where: { email },
-      update: { otp, otp_expiry: otpExpiry },
-      create: { email, otp, otp_expiry: otpExpiry },
-    });
-
-    // Send OTP via email
-    await sendEmail(email, "Your OTP Code", `Your OTP code is: ${otp}`);
 
     res
       .status(200)
-      .json({ message: "OTP sent successfully", data: { timeOut: timeInSec } });
-  } catch (error) {
-    next(error);
+      .json({ message: "OTP sent successfully", timeout: OTP_EXPIRY_SECONDS });
+  } catch (err) {
+    next(err);
   }
 };
 
 export const verifyOtp = async (
-  req: Request,
+  req: Request<{}, {}, VerifyOtpBody>,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
   try {
     const { email, otp, purpose } = req.body;
+    const result = await OtpService.verifyOtp(email, otp, purpose);
 
-    if (!email || !otp || !purpose) {
-      res.status(400).json({ message: "Missing required information!" });
-      return;
-    }
-
-    // Retrieve OTP record
-    const otpRecord = await prisma.userOtp.findFirst({ where: { email } });
-
-    if (!otpRecord) {
-      res.status(404).json({ message: "OTP not found" });
-      return;
-    }
-
-    // Validate OTP and expiry
-    const currentTime = Math.floor(Date.now() / 1000);
-    if (otpRecord.otp !== otp || otpRecord.otp_expiry < currentTime) {
-      res.status(400).json({ message: "Invalid or expired OTP" });
-      return;
-    }
-
-    const timeOut = 600;
-    let resObj: {
-      message: string;
-      data?: { timeOut?: number };
-    } = {
-      message: "OTP verified successfully",
-      data: { timeOut },
-    };
-
-    if (purposeReturnToken.includes(purpose)) {
-      const token = jwt.sign({ email }, process.env.JWT_SECRET as string, {
-        expiresIn: `${timeOut}s`,
-      });
-      resObj.data = { timeOut };
-      res.cookie(getTokenName(Token.ResetPassword), token, {
+    // If the service returned a reset token, set the cookie and respond with timeout
+    if (result.resetToken && result.cookieName) {
+      res.cookie(result.cookieName, result.resetToken, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
+        secure: env.NODE_ENV === "production",
         sameSite: "strict",
-        maxAge: timeOut * 1000,
+        maxAge: RESET_TOKEN_EXPIRY_SECONDS * 1000,
       });
-    } else {
-      delete resObj.data;
+      res.status(200).json({
+        message: "OTP verified successfully",
+        timeout: result.timeout,
+      });
+      return;
     }
-    // If OTP is valid, delete the record and return success
-    await prisma.userOtp.delete({ where: { email } });
 
-    res.status(200).json(resObj);
-  } catch (error) {
-    next(error);
+    res.status(200).json({ message: "OTP verified successfully" });
+  } catch (err) {
+    next(err);
   }
 };

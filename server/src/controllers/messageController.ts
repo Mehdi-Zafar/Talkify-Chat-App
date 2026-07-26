@@ -1,13 +1,20 @@
 import { Request, Response, NextFunction } from "express";
-import { prisma } from "..";
+import * as MessageService from "../services/messageService";
+import {
+  CreateMessageBody,
+  UpdateMessageBody,
+  IdParam,
+  PaginationQuery,
+} from "../types/requests";
+import { parseId, parsePagination } from "../lib/utils";
 
 export const createMessage = async (
-  req: Request,
+  req: Request<{}, {}, CreateMessageBody>,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
   try {
-    const message = await prisma.messages.create({ data: req.body });
+    const message = await MessageService.createMessage(req.body, req.user!.id);
     res.status(201).json(message);
   } catch (err) {
     next(err);
@@ -15,34 +22,33 @@ export const createMessage = async (
 };
 
 export const getMessages = async (
-  req: Request,
+  req: Request<{ chatId: string }, {}, {}, PaginationQuery>,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
   try {
-    const messages = await prisma.messages.findMany({
-      include: { user: true, chat: true },
-    });
-    res.status(200).json(messages);
+    const chatId = parseId(req.params.chatId);
+    const { page, limit } = parsePagination(req.query.page, req.query.limit);
+    const result = await MessageService.getMessages(
+      chatId,
+      req.user!.id,
+      page,
+      limit,
+    );
+    res.status(200).json(result);
   } catch (err) {
     next(err);
   }
 };
 
 export const getMessageById = async (
-  req: Request,
+  req: Request<IdParam>,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
   try {
-    const message = await prisma.messages.findUnique({
-      where: { id: parseInt(req.params.id, 10) },
-      include: { user: true, chat: true },
-    });
-    if (!message) {
-      res.status(404).json({ message: "Message not found" });
-      return;
-    }
+    const id = parseId(req.params.id);
+    const message = await MessageService.getMessageById(id, req.user!.id);
     res.status(200).json(message);
   } catch (err) {
     next(err);
@@ -50,15 +56,17 @@ export const getMessageById = async (
 };
 
 export const updateMessage = async (
-  req: Request,
+  req: Request<IdParam, {}, UpdateMessageBody>,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
   try {
-    const message = await prisma.messages.update({
-      where: { id: parseInt(req.params.id, 10) },
-      data: req.body,
-    });
+    const id = parseId(req.params.id);
+    const message = await MessageService.updateMessage(
+      id,
+      req.user!.id,
+      req.body.content,
+    );
     res.status(200).json(message);
   } catch (err) {
     next(err);
@@ -66,14 +74,13 @@ export const updateMessage = async (
 };
 
 export const deleteMessage = async (
-  req: Request,
+  req: Request<IdParam>,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
   try {
-    await prisma.messages.delete({
-      where: { id: parseInt(req.params.id, 10) },
-    });
+    const id = parseId(req.params.id);
+    await MessageService.deleteMessage(id, req.user!.id);
     res.status(204).send();
   } catch (err) {
     next(err);

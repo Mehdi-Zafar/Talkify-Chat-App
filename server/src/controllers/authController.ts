@@ -1,166 +1,119 @@
 import { Request, Response, NextFunction } from "express";
-import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { prisma } from "..";
-import { sendEmail } from "../middleware/nodemailer";
-import { getHashSalt } from "../utils/constants";
+import * as AuthService from "../services/authService";
+import { AppError } from "../errors/AppError";
+import { LoginBody, RegisterBody, ResetPasswordBody } from "../types/requests";
+import {
+  REFRESH_TOKEN_COOKIE_NAME,
+  REFRESH_TOKEN_COOKIE_OPTIONS,
+} from "../lib/constants";
+import { getTokenName } from "../lib/utils";
+import { Token } from "../lib/models";
+import { env } from "../config/env";
 
 export const loginUser = async (
-  req: Request,
+  req: Request<{}, {}, LoginBody>,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
   try {
-    // Destructure email and password from the request body
     const { email, password } = req.body;
-
-    // Find the user by email
-    const user = await prisma.users.findUnique({
-      where: {
-        email,
-      },
-    });
-
-    if (!user) {
-      // If the user is not found, send an error response
-      res.status(400).json({ error: "Invalid credentials" });
-      return;
-    }
-
-    // Compare the provided password with the hashed password stored in the database
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-
-    if (!isPasswordValid) {
-      // If the password is invalid, send an error response
-      res.status(400).json({ error: "Invalid credentials" });
-      return;
-    }
-
-    // Generate a JWT token
-    const accessToken = jwt.sign(
-      { id: user.id, email: user.email },
-      process.env.JWT_SECRET as string, // Ensure JWT_SECRET is in .env
-      { expiresIn: "1h" } // Token expiration time
-    );
-    const refreshToken = jwt.sign(
-      { id: user.id, email: user.email },
-      process.env.JWT_SECRET as string, // Ensure JWT_SECRET is in .env
-      { expiresIn: "7d" } // Token expiration time
+    const { user, accessToken, refreshToken } = await AuthService.login(
+      email,
+      password,
     );
 
-    const emailSend = await sendEmail(user.email, "Sign In", "Welcome!");
+    // Fire-and-forget — login must not fail due to email issues
+    // sendEmail(email, "Sign In", "Welcome!").catch((err) =>
+    //   console.error("Login email failed:", err),
+    // );
 
-    res.cookie("refreshTokenTalkify", refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production", // Use secure cookies in production
-      sameSite: "strict", // Ensures the cookie is sent only from your site
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in milliseconds
-    });
-
-    // Send the token to the client
-    res.status(200).json({ message: "Login successful", token: accessToken });
+    res.cookie(
+      REFRESH_TOKEN_COOKIE_NAME,
+      refreshToken,
+      REFRESH_TOKEN_COOKIE_OPTIONS,
+    );
+    res
+      .status(200)
+      .json({ user, token: accessToken, message: "Login Successful!" });
   } catch (err) {
-    next(err); // Pass any error to the error handling middleware
+    next(err);
   }
 };
 
 export const registerUser = async (
-  req: Request,
+  req: Request<{}, {}, RegisterBody>,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): Promise<void> => {
   try {
-    const { email, password, user_name, phone_number, gender } = req.body;
-
-    // Check if the email already exists
-    const existingUser = await prisma.users.findUnique({
-      where: { email },
-    });
-
-    if (existingUser) {
-      res.status(400).json({ error: "Email is already in use" });
-      return;
-    }
-
-    // Validate input (optional but recommended)
-    if (!email || !password || !user_name || !phone_number || !gender) {
-      res.status(400).json({ error: "All fields are required" });
-      return;
-    }
-
-    // Hash the password
-    const hashedPassword = await bcrypt.hash(password, getHashSalt());
-
-    // Create a new user
-    const user = await prisma.users.create({
-      data: {
-        user_name,
-        email,
-        phone_number,
-        gender,
-        password: hashedPassword, // Store hashed password
-      },
-    });
-
-    // Send a success response
-    res.status(201).json({
-      message: "User registered successfully",
-      user: {
-        id: user.id,
-        user_name: user.user_name,
-        email: user.email,
-        phone_number: user.phone_number,
-        gender: user.gender,
-      },
-    });
+    const user = await AuthService.register(req.body);
+    res.status(201).json(user);
   } catch (err) {
-    next(err); // Pass errors to the error-handling middleware
+    next(err);
   }
 };
 
 export const logoutUser = async (
   req: Request,
-  res: Response
+  res: Response,
+  next: NextFunction,
 ): Promise<void> => {
-  res.clearCookie("refreshTokenTalkify", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
-  });
-  res.status(200).json({ success: true, message: "Logged out successfully" });
+  try {
+    res.clearCookie(REFRESH_TOKEN_COOKIE_NAME, REFRESH_TOKEN_COOKIE_OPTIONS);
+    res.status(200).json({ message: "Logged out successfully" });
+  } catch (err) {
+    next(err);
+  }
 };
 
 export const refreshAccessToken = async (
   req: Request,
-  res: Response
+  res: Response,
+  next: NextFunction,
 ): Promise<void> => {
-  const refreshToken = req.cookies?.refreshTokenTalkify;
-
-  if (!refreshToken) {
-    res.status(401).json({ error: "No refresh token provided" });
-    return;
-  }
-
   try {
-    // Verify the refresh token
-    const payload = jwt.verify(
-      refreshToken,
-      process.env.JWT_SECRET as string
-    ) as { id: number; email: string };
+    const refreshToken = req.cookies?.[REFRESH_TOKEN_COOKIE_NAME];
+    if (!refreshToken) {
+      throw new AppError(401, "No refresh token provided");
+    }
 
-    // Generate a new access token
-    const accessToken = jwt.sign(
-      { id: payload.id, email: payload.email },
-      process.env.JWT_SECRET as string,
-      { expiresIn: "1h" }
-    );
+    const accessToken = AuthService.refreshAccess(refreshToken);
+    res.status(200).json({ accessToken });
+  } catch (err) {
+    // Map JWT-specific errors to 401 — everything else goes to the global handler
+    if (err instanceof jwt.TokenExpiredError) {
+      res.status(401).json({ message: "Refresh token expired" });
+      return;
+    }
+    if (err instanceof jwt.JsonWebTokenError) {
+      res.status(401).json({ message: "Invalid refresh token" });
+      return;
+    }
+    next(err);
+  }
+};
 
-    res.status(200).json({
-      success: true,
-      message: "Access token refreshed",
-      data: { accessToken },
+export const resetUserPassword = async (
+  req: Request<{}, {}, ResetPasswordBody>,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const token = req.cookies?.[getTokenName(Token.ResetPassword)];
+    if (!token) throw new AppError(400, "Reset token missing");
+
+    const { email, password } = req.body;
+    await AuthService.resetPassword(token, email, password);
+
+    res.clearCookie(getTokenName(Token.ResetPassword), {
+      httpOnly: true,
+      secure: env.NODE_ENV === "production",
+      sameSite: "strict",
     });
-  } catch (error) {
-    res.status(401).json({ error: "Invalid or missing token! Sign in Again." });
+
+    res.status(200).json({ message: "Password updated successfully" });
+  } catch (err) {
+    next(err);
   }
 };
