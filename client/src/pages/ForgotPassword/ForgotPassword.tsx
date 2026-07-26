@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { useMutation } from "@tanstack/react-query";
 import { sendOtp, verifyOtp } from "../../api/OtpAPI/OtpAPI";
-import { OtpRequest, OtpResponseData, Purpose } from "../../utils/contracts";
+import { OtpRequest, OtpResponse, Purpose } from "../../utils/contracts";
 import {
   Button,
   Dialog,
@@ -32,7 +32,7 @@ export default function ForgotPassword() {
   } = useForm({ resolver: zodResolver(FormSchema) });
   const [otp, setOtp] = useState("");
   const [openModal, setOpenModal] = useState(false);
-  const [otpInfo, setOtpInfo] = useState<OtpResponseData | null>(null);
+  const [otpInfo, setOtpInfo] = useState<OtpResponse | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
   const navigate = useNavigate();
 
@@ -59,7 +59,7 @@ export default function ForgotPassword() {
   async function formSubmit(data: OtpRequest) {
     try {
       const res = await mutateAsync(data);
-      setOtpInfo(res?.data);
+      setOtpInfo(res);
       setOpenModal(true);
     } catch (err) {}
   }
@@ -72,9 +72,9 @@ export default function ForgotPassword() {
         otp,
         purpose: Purpose.ResetPassword,
       });
-      if (otpres?.data) {
+      if (otpres) {
         navigate("/reset-password", {
-          state: { email: getValues("email"), otpData: otpres?.data },
+          state: { email: getValues("email"), otpData: otpres },
           replace: true,
         });
       }
@@ -139,9 +139,9 @@ export default function ForgotPassword() {
                   />
                 )}
               />
-              {otpInfo?.timeOut ? (
+              {otpInfo?.timeout ? (
                 <h3 className="font-medium">
-                  OTP expires in <CountdownTimer seconds={otpInfo?.timeOut} />
+                  OTP expires in <CountdownTimer seconds={otpInfo?.timeout} />
                 </h3>
               ) : null}
               <h5 className="font-medium">
