@@ -6,13 +6,38 @@ import {
   updateMessage,
   deleteMessage,
 } from "../controllers/messageController";
+import {
+  validateBody,
+  validateParams,
+  validateQuery,
+} from "../middleware/validate";
+import {
+  createMessageSchema,
+  updateMessageSchema,
+  chatIdParamSchema,
+  paginationSchema,
+} from "../validators/messageValidators";
+import { idParamSchema } from "../validators/userValidators";
+import authenticateUser from "../middleware/authenticateUser";
 
 const router = Router();
 
-router.post("/", createMessage);
-router.get("/", getMessages);
-router.get("/:id", getMessageById);
-router.put("/:id", updateMessage);
-router.delete("/:id", deleteMessage);
+router.use(authenticateUser);
+
+router.post("/", validateBody(createMessageSchema), createMessage);
+router.get(
+  "/:chatId",
+  validateParams(chatIdParamSchema),
+  validateQuery(paginationSchema),
+  getMessages,
+);
+router.get("/message/:id", validateParams(idParamSchema), getMessageById);
+router.put(
+  "/:id",
+  validateParams(idParamSchema),
+  validateBody(updateMessageSchema),
+  updateMessage,
+);
+router.delete("/:id", validateParams(idParamSchema), deleteMessage);
 
 export default router;
