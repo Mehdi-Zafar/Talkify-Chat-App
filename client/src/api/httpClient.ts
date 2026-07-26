@@ -21,7 +21,6 @@ httpClient.interceptors.request.use(async (config) => {
   const { isInitialized, pendingRequests, accessToken } =
     useAuthStore.getState();
 
-  console.log(useUserStore.getState().isLoggedIn);
   // Bypass wait if explicitly allowed (e.g., public APIs)
   if (config.headers["allow-before-auth"]) {
     delete config.headers["allow-before-auth"];
@@ -52,10 +51,18 @@ httpClient.interceptors.response.use(
   },
   async (error) => {
     const originalRequest = error.config;
+    const authRoute = originalRequest.url?.includes("/auth");
+    if (originalRequest.url?.includes("/auth/refresh")) {
+      return Promise.reject(error);
+    }
     const { refreshAccessToken, logout } = useAuthStore.getState();
 
     // Handle 401 Unauthorized (token expired)
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    if (
+      !authRoute &&
+      error.response?.status === 401 &&
+      !originalRequest._retry
+    ) {
       originalRequest._retry = true; // Mark request to avoid infinite retry
 
       if (!isRefreshing) {
@@ -79,7 +86,7 @@ httpClient.interceptors.response.use(
           } else {
             // If no new token, force logout
             await logout();
-            window.location.href = "/login";
+            // window.location.href = "/sign-in";
           }
         } catch (refreshError) {
           // If refresh fails, reject all queued requests
@@ -88,7 +95,7 @@ httpClient.interceptors.response.use(
 
           // Logout and redirect to login
           await logout();
-          window.location.href = "/login";
+          // window.location.href = "/sign-in";
           return Promise.reject(refreshError);
         } finally {
           isRefreshing = false;
@@ -111,11 +118,11 @@ httpClient.interceptors.response.use(
 
     // Handle other errors (show toast if not explicitly hidden)
     if (!originalRequest?.headers["hide-toast"]) {
-      showToast(error?.response?.data?.error || "An error occurred", "error");
+      showToast(error?.response?.data?.message || "An error occurred", "error");
     }
 
     return Promise.reject(error);
-  }
+  },
 );
 
 export default httpClient;
