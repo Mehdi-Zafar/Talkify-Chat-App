@@ -1,15 +1,16 @@
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import { hashPassword } from "../src/lib/utils";
 
 const prisma = new PrismaClient();
 
 async function main() {
-  const hashedPassword = await bcrypt.hash("Password@123", 10);
+  const hashedPassword = await hashPassword("Password@123");
   // Seed users
   const user1 = await prisma.users.create({
     data: {
       user_name: "JohnDoe",
-      email: "john.doe@example.com",
+      email: "john.doe@sharklasers.com",
       phone_number: "1234567890",
       gender: "Male",
       password: hashedPassword, // Replace with hashed password
@@ -19,7 +20,7 @@ async function main() {
   const user2 = await prisma.users.create({
     data: {
       user_name: "JaneDoe",
-      email: "jane.doe@example.com",
+      email: "jane.doe@sharklasers.com",
       phone_number: "0987654321",
       gender: "Female",
       password: hashedPassword, // Replace with hashed password
@@ -29,7 +30,7 @@ async function main() {
   const user3 = await prisma.users.create({
     data: {
       user_name: "AliceSmith",
-      email: "alice.smith@example.com",
+      email: "alice.smith@sharklasers.com",
       phone_number: "1112223333",
       gender: "Female",
       password: hashedPassword, // Replace with hashed password
@@ -39,7 +40,7 @@ async function main() {
   const user4 = await prisma.users.create({
     data: {
       user_name: "BobBrown",
-      email: "bob.brown@example.com",
+      email: "bob.brown@sharklasers.com",
       phone_number: "4445556666",
       gender: "Male",
       password: hashedPassword, // Replace with hashed password
