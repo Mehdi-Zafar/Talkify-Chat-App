@@ -20,6 +20,7 @@ import { useAuthStore, useUserStore } from "@/zustand";
 import { useQuery } from "@tanstack/react-query";
 import { ChatAPI } from "@/api";
 import { Chat } from "@/utils/contracts";
+import { formatMessageTime } from "@/utils/helper";
 
 export default function ChatListing() {
   const { id } = useParams();
@@ -28,6 +29,7 @@ export default function ChatListing() {
   const [openNewGroupChat, setOpenNewGroupChat] = useState(false);
   const logout = useAuthStore((state) => state.logout);
   const user = useUserStore((state) => state.user);
+
   const { data: chats, isFetching: fetchingChats } = useQuery({
     queryKey: ["chats", user?.id],
     queryFn: getChats,
@@ -36,8 +38,8 @@ export default function ChatListing() {
 
   async function getChats() {
     try {
-      const res = await ChatAPI.getChatsByUserId(user?.id);
-      return res.data;
+      const chats = await ChatAPI.getChatsByUserId(user?.id);
+      return chats;
     } catch (err) {
       console.error(err);
       return [];
@@ -101,7 +103,7 @@ export default function ChatListing() {
                 className={twMerge(
                   `py-3 px-4 bg-lightBg dark:bg-darkBg shadow-sm rounded-md flex justify-between cursor-pointer duration-500 text-lightText dark:text-darkText ease-in-out hover:bg-lightPrimary dark:hover:bg-darkPrimary hover:text-white`,
                   id == chat?.id?.toString() &&
-                    "bg-lightPrimary dark:bg-darkPrimary text-white"
+                    "bg-lightPrimary dark:bg-darkPrimary text-white",
                 )}
                 onClick={() => selectChat(chat?.id)}
               >
@@ -114,13 +116,15 @@ export default function ChatListing() {
                   <div className="flex flex-col gap-1.5">
                     <h3 className="text-sm font-semibold">{chat?.name}</h3>
                     <small className="text-[11px] line-clamp-1 opacity-80 font-medium">
-                      Message Content dasdasdasdasdsaddas
+                      {chat?.lastMessage?.content || "No messages yet!"}
                     </small>
                   </div>
                 </div>
                 <div className="flex flex-col shrink-0">
                   <small className="text-xs font-medium opacity-80">
-                    07:00 pm
+                    {formatMessageTime(
+                      chat?.lastMessage?.createdAt || chat?.updatedAt,
+                    )}
                   </small>
                 </div>
               </div>

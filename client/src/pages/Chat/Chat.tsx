@@ -10,14 +10,12 @@ export default function Chat() {
   const socketDisconnect = useSocketStore((state) => state.disconnect);
 
   useEffect(() => {
-    if (id) {
-      socketConnect();
-    }
+    socketConnect();
 
     return () => {
       socketDisconnect();
     };
-  }, [id]);
+  }, []);
 
   return (
     <div className="grid grid-cols-12 items-stretch h-screen">
