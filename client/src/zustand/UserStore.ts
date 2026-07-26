@@ -18,9 +18,9 @@ const useUserStore = create<UsersStore>((set) => ({
   error: null,
 
   getUserProfile: async () => {
-    const res = await UsersAPI.getUserProfile();
+    const user = await UsersAPI.getUserProfile();
     set({
-      user: res.data,
+      user,
     });
   },
 }));
