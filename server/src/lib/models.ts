@@ -1,3 +1,6 @@
+import { Prisma } from "@prisma/client";
+import { PUBLIC_USER_FIELDS } from "../repositories/userRepository";
+
 export enum Purpose {
   SignUp = "signUp",
   ResetPassword = "resetPassword",
@@ -33,6 +36,10 @@ export class User {
   verification_code_expiry: number;
   image: string;
 }
+
+export type PublicUser = Prisma.usersGetPayload<{
+  select: typeof PUBLIC_USER_FIELDS;
+}>;
 
 export class Chat {
   id: number;
