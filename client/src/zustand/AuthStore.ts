@@ -27,12 +27,20 @@ const useAuthStore = create<AuthStore>((set, get) => ({
   initializeAuth: async () => {
     try {
       await get().refreshAccessToken(); // Call refresh token method on app load
-      await useUserStore.getState().getUserProfile();
     } catch (error) {
       set({ isLoggedIn: false });
     } finally {
       set({ isInitialized: true, loading: false });
       get().resolvePendingRequests();
+    }
+
+    if (get().accessToken) {
+      try {
+        await useUserStore.getState().getUserProfile();
+      } catch {
+        // Profile fetch failed — non-critical, don't block the app
+        set({ isLoggedIn: false });
+      }
     }
   },
 
@@ -44,7 +52,7 @@ const useAuthStore = create<AuthStore>((set, get) => ({
         accessToken: response.token,
         isLoggedIn: true,
       });
-      await useUserStore.getState().getUserProfile();
+      useUserStore.setState({ user: response.user });
     } catch (error) {
       throw error;
     }
@@ -67,7 +75,7 @@ const useAuthStore = create<AuthStore>((set, get) => ({
   refreshAccessToken: async () => {
     try {
       const response = await AuthAPI.refreshAccessToken();
-      set({ accessToken: response.data.accessToken, isLoggedIn: true });
+      set({ accessToken: response.accessToken, isLoggedIn: true });
     } catch (error) {
       set({ isLoggedIn: false, accessToken: null });
       throw error;
