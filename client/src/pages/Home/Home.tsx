@@ -1,12 +1,10 @@
-import { useEffect, useState, useMemo } from "react";
 import { Navigate } from "react-router-dom";
-import { io } from "socket.io-client";
 
 export default function Home() {
-  const socket = useMemo(() => io("ws://localhost:3000"), []);
-  const [socketId, setSocketId] = useState();
-  const [msg, setMsg] = useState("");
-  const [messages, setMessages] = useState([]);
+  // const socket = useMemo(() => io("ws://localhost:3000"), []);
+  // const [socketId, setSocketId] = useState();
+  // const [msg, setMsg] = useState("");
+  // const [messages, setMessages] = useState([]);
 
   return <Navigate to="/sign-in" />;
 
