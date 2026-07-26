@@ -25,7 +25,7 @@ const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB in bytes
 
 const checkFileType = (file: File | undefined) => {
   if (!file) return true; // Skip if no file is provided (optional)
-  const allowedExtensions = ["image/png", "image/jpeg", "image/jpg"];
+  const allowedExtensions = ["image/png", "image/jpeg", "image/jpg","image/webp"];
   return allowedExtensions.includes(file.type);
 };
 
@@ -37,11 +37,11 @@ const FormSchema = z.object({
     .optional()
     .refine(
       (file) => !file || checkFileType(file), // Check type only if file is provided
-      { message: "Only .png, .jpg formats are supported." }
+      { message: "Only .png, .jpg, .webp formats are supported." },
     )
     .refine(
       (file) => !file || file.size < MAX_FILE_SIZE, // Check size only if file is provided
-      { message: "Max size is 5MB." }
+      { message: "Max size is 5MB." },
     ),
 });
 
@@ -71,7 +71,17 @@ export default function Profile() {
   async function onSubmit(data) {
     try {
       const res = await UsersAPI.updateUserData(data, user?.id);
-    } catch (err) {}
+
+      if (data.image instanceof File) {
+        const formData = new FormData();
+        formData.append("image", data.image);
+        await UsersAPI.updateUserAvatar(formData, user?.id);
+      }
+
+      showToast("Profile updated successfully", "success");
+    } catch (err) {
+      showToast("Failed to update profile", "error");
+    }
   }
   return (
     <div className="py-6 px-6">
@@ -113,6 +123,7 @@ export default function Profile() {
                     setValue("image", event.target.files[0]);
                     setPreview(URL.createObjectURL(event.target.files[0]));
                   }}
+                  accept="image/png, image/jpeg,image/webp"
                   hidden
                   id="image-input"
                 />
