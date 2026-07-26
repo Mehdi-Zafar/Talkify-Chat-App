@@ -3,23 +3,12 @@ import { Theme } from "../../utils/contracts";
 import { useThemeStore } from "../../zustand";
 import { IconButton } from "@material-tailwind/react";
 
-const ThemeToggleButton = ({ noHeader }) => {
+const ThemeToggleButton = ({ header = false }) => {
   const { theme, toggleTheme } = useThemeStore();
 
   return (
     <>
-      {!noHeader ? (
-        <IconButton
-          onClick={toggleTheme}
-          className="px-4 py-2 rounded bg-transparent"
-        >
-          {theme === Theme.LIGHT ? (
-            <SunIcon stroke="white" width={20} />
-          ) : (
-            <MoonIcon stroke="white" width={20} />
-          )}
-        </IconButton>
-      ) : (
+      {header ? (
         <div className="group fixed bottom-0 right-0 p-2  flex items-end justify-end w-24 h-24 ">
           {/* <div className="text-white shadow-xl flex items-center justify-center p-3 rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 z-50 absolute  ">
             <svg
@@ -101,6 +90,17 @@ const ThemeToggleButton = ({ noHeader }) => {
             )}
           </IconButton>
         </div>
+      ) : (
+        <IconButton
+          onClick={toggleTheme}
+          className="px-4 py-2 rounded bg-transparent"
+        >
+          {theme === Theme.LIGHT ? (
+            <SunIcon stroke="white" width={20} />
+          ) : (
+            <MoonIcon stroke="white" width={20} />
+          )}
+        </IconButton>
       )}
     </>
   );
