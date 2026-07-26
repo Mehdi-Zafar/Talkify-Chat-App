@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="c94e0e6f-6a43-4ced-8b86-58bfd7015040" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/client/package-lock.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/client/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/client/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/client/src/App.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/client/src/App.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/client/src/api/AuthAPI/AuthAPI.ts" beforeDir="false" afterPath="$PROJECT_DIR$/client/src/api/AuthAPI/AuthAPI.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/client/src/api/ChatAPI/ChatAPI.ts" beforeDir="false" afterPath="$PROJECT_DIR$/client/src/api/ChatAPI/ChatAPI.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/client/src/api/UsersAPI/UsersAPI.ts" beforeDir="false" afterPath="$PROJECT_DIR$/client/src/api/UsersAPI/UsersAPI.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/client/src/api/httpClient.ts" beforeDir="false" afterPath="$PROJECT_DIR$/client/src/api/httpClient.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/client/src/pages/Chat/Chat.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/client/src/pages/Chat/Chat.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/client/src/pages/Chat/components/ChatDisplay/ChatDisplay.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/client/src/pages/Chat/components/ChatDisplay/ChatDisplay.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/client/src/pages/Chat/components/ChatListing/ChatListing.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/client/src/pages/Chat/components/ChatListing/ChatListing.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/client/src/pages/Profile/Profile.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/client/src/pages/Profile/Profile.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/client/src/utils/contracts.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/client/src/utils/contracts.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/client/src/utils/helper.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/client/src/utils/helper.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/client/src/zustand/AuthStore.ts" beforeDir="false" afterPath="$PROJECT_DIR$/client/src/zustand/AuthStore.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/server/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/package-lock.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/server/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/prisma/migrations/migration_lock.toml" beforeDir="false" afterPath="$PROJECT_DIR$/server/prisma/migrations/migration_lock.toml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/prisma/schema.prisma" beforeDir="false" afterPath="$PROJECT_DIR$/server/prisma/schema.prisma" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/prisma/seed.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/prisma/seed.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/src/controllers/authController.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/controllers/authController.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/src/controllers/chatController.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/controllers/chatController.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/src/controllers/messageController.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/controllers/messageController.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/src/controllers/otpController.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/controllers/otpController.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/src/controllers/userController.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/controllers/userController.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/src/index.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/index.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/src/middleware/authenticateUser.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/middleware/authenticateUser.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/src/middleware/multer.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/middleware/multer.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/src/routes/chatRoutes.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/routes/chatRoutes.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/src/routes/messageRoutes.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/routes/messageRoutes.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/src/routes/userRoutes.ts" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/routes/userRoutes.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/src/utils/constants.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/src/utils/models.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/src/utils/utils.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/tsconfig.json" beforeDir="false" afterPath="$PROJECT_DIR$/server/tsconfig.json" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="ProjectColorInfo"><![CDATA[{
+  "associatedIndex": 2,
+  "fromUser": false
+}]]></component>
+  <component name="ProjectId" id="3GjDTNgLn78wnchLP2heZoJT7yy" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "codeWithMe.voiceChat.enabledByDefault": "false",
+    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
+    "git-widget-placeholder": "main",
+    "javascript.preferred.runtime.type.id": "node",
+    "junie.onboarding.icon.badge.shown": "true",
+    "last_opened_file_path": "C:/projects/Talkify-Chat-App",
+    "node.js.detected.package.eslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "nodejs_package_manager_path": "pnpm",
+    "to.speed.mode.migration.done": "true",
+    "ts.external.directory.path": "C:\\projects\\Talkify-Chat-App\\client\\node_modules\\typescript\\lib",
+    "vue.rearranger.settings.migration": "true"
+  }
+}]]></component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-js-predefined-d6986cc7102b-31caf2ab9e3c-JavaScript-WS-261.24374.125" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="c94e0e6f-6a43-4ced-8b86-58bfd7015040" name="Changes" comment="" />
+      <created>1784476091834</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1784476091834</updated>
+      <workItem from="1784476093142" duration="186000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+</project>
