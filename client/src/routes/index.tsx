@@ -45,7 +45,7 @@ const NoHeaderLayout = () => {
     <div className="flex shrink-0 h-screen">
       <div className="flex-1">
         <Outlet />
-        <ThemeToggleButton noHeader={true} />
+        <ThemeToggleButton header={true} />
       </div>
     </div>
   );
@@ -84,6 +84,6 @@ export const router = createBrowserRouter(
           <Route path="/profile" element={<Profile />} />
         </Route>
       </Route>
-    </>
-  )
+    </>,
+  ),
 );
