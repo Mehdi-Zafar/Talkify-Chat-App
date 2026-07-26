@@ -1,11 +1,12 @@
 import nodemailer from "nodemailer";
+import { env } from "../config/env";
 
 // Create a reusable transporter
 export const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
+    user: env.SMTP_USER,
+    pass: env.SMTP_PASS,
   },
 });
 
@@ -13,7 +14,7 @@ export const transporter = nodemailer.createTransport({
 export const sendEmail = async (to: string, subject: string, html: string) => {
   try {
     const info = await transporter.sendMail({
-      from: process.env.EMAIL_FROM,
+      from: env.EMAIL_FROM,
       to,
       subject,
       html,

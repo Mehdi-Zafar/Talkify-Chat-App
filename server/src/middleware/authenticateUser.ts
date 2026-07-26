@@ -1,36 +1,61 @@
+// src/middleware/authenticateUser.ts
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
+import { env } from "../config/env";
 
-const authenticateUser = (req: Request, res: Response, next: NextFunction) => {
+interface jwtPayload {
+  id: number;
+  email: string;
+}
+
+export interface AuthorizedRequest extends Request {
+  user?: jwtPayload;
+}
+
+const authenticateUser = (
+  req: AuthorizedRequest,
+  res: Response,
+  next: NextFunction,
+): void => {
   try {
-    // Retrieve the token from the Authorization header
     const authHeader = req.headers.authorization;
 
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return res.status(401).json({
+    if (!authHeader?.startsWith("Bearer ")) {
+      res.status(401).json({
         success: false,
-        message: "Authentication token is missing or invalid",
+        message: "Authentication token is missing",
       });
+      return;
     }
 
     const token = authHeader.split(" ")[1];
+    const secretKey = env.JWT_ACCESS_SECRET;
 
-    // Verify the token
-    const secretKey = process.env.JWT_SECRET as string;
-    if (!secretKey) {
-      throw new Error("JWT secret key is not defined in environment variables");
-    }
+    const decoded = jwt.verify(token, secretKey) as {
+      id: number;
+      email: string;
+    };
 
-    const decoded = jwt.verify(token, secretKey);
-
-    // Attach the decoded token to the request object for further use
-    // req.user = decoded;
+    // Fixed: actually attach decoded user to request
+    // Controllers can now access req.user.id safely
+    req.user = { id: decoded.id, email: decoded.email };
 
     next();
   } catch (error) {
+    // Distinguish expired vs invalid — client knows whether to refresh or re-login
+    if (error instanceof jwt.TokenExpiredError) {
+      res.status(401).json({
+        success: false,
+        message: "Token expired",
+        code: "TOKEN_EXPIRED",
+      });
+      return;
+    }
+
     res.status(401).json({
       success: false,
-      message: "Invalid or expired token",
+      message: "Invalid token",
+      code: "TOKEN_INVALID",
     });
   }
 };
