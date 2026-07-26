@@ -1,12 +1,19 @@
-import { AuthCredentials, AuthResponse, User } from "../../utils/contracts";
+import {
+  AuthCredentials,
+  AuthResponse,
+  ResetPasswordPayload,
+  User,
+} from "../../utils/contracts";
 import httpClient from "../httpClient";
+
+const BASE_URL = "/auth";
 
 export const login = async (credentials: AuthCredentials) => {
   try {
     const res = await httpClient.post<AuthResponse>(
-      "/auth/login",
+      `${BASE_URL}/login`,
       credentials,
-      { headers: { "allow-before-auth": true } }
+      { headers: { "allow-before-auth": true } },
     );
     return res.data;
   } catch (error) {
@@ -22,7 +29,7 @@ export const register = async (userData: User) => {
     user.gender = userData.gender;
     user.password = userData.password;
     user.phone_number = userData.phone_number;
-    const res = await httpClient.post("/auth/register", user, {
+    const res = await httpClient.post(`${BASE_URL}/register`, user, {
       headers: { "allow-before-auth": true },
     });
     return res.data;
@@ -33,7 +40,7 @@ export const register = async (userData: User) => {
 
 export const logout = async () => {
   try {
-    const res = await httpClient.post<AuthResponse>("/auth/logout", {});
+    const res = await httpClient.post<AuthResponse>(`${BASE_URL}/logout`, {});
     return res.data;
   } catch (error) {
     throw error;
@@ -43,10 +50,21 @@ export const logout = async () => {
 export const refreshAccessToken = async () => {
   try {
     const res = await httpClient.post(
-      "/auth/refresh-token",
+      `${BASE_URL}/refresh`,
       {},
-      { headers: { "hide-toast": true, "allow-before-auth": true } }
+      { headers: { "hide-toast": true, "allow-before-auth": true } },
     );
+    return res.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const resetPassword = async (payload: ResetPasswordPayload) => {
+  try {
+    const res = await httpClient.post(`${BASE_URL}/reset-password`, payload, {
+      headers: { "allow-before-auth": true },
+    });
     return res.data;
   } catch (error) {
     throw error;

@@ -16,8 +16,8 @@ export const getUsers = async () => {
 
 export const getUserProfile = async () => {
   try {
-    const res = await httpClient.get(`${BASE_URL}/get/profile`, {
-      headers: { "hide-toast": true, "allow-before-auth": true },
+    const res = await httpClient.get(`${BASE_URL}/profile`, {
+      headers: { "hide-toast": true },
     });
     return res.data;
   } catch (error) {
@@ -25,24 +25,23 @@ export const getUserProfile = async () => {
   }
 };
 
-export const updateUserByEmail = async (data) => {
-  try {
-    const res = await httpClient.put(`${BASE_URL}`, data);
-    return res.data;
-  } catch (error) {
-    throw error;
-  }
-};
+// export const updateUserByEmail = async (data) => {
+//   try {
+//     const res = await httpClient.put(`${BASE_URL}`, data);
+//     return res.data;
+//   } catch (error) {
+//     throw error;
+//   }
+// };
 
 export const updateUserData = async (userData, id) => {
   try {
     const formData = new FormData();
-    formData.append("image", userData?.image); // Replace `selectedFile` with the actual file object
     formData.append("username", userData?.username);
     formData.append("about", userData?.about);
     const res = await httpClient.post(
       `${BASE_URL}/upload-user-data/${id}`,
-      formData
+      formData,
     );
     return res.data;
   } catch (error) {
@@ -50,11 +49,9 @@ export const updateUserData = async (userData, id) => {
   }
 };
 
-export const resetPassword = async (payload: ResetPasswordPayload) => {
+export const updateUserAvatar = async (formData: FormData, id: number) => {
   try {
-    const res = await httpClient.post(`${BASE_URL}/reset-password`, payload, {
-      headers: { "allow-before-auth": true },
-    });
+    const res = await httpClient.post(`${BASE_URL}/avatar/${id}`, formData);
     return res.data;
   } catch (error) {
     throw error;
@@ -64,12 +61,12 @@ export const resetPassword = async (payload: ResetPasswordPayload) => {
 export const getChatUsers = async (
   userId: number,
   relationType: UserRelationType,
-  search?: string
+  search?: string,
 ) => {
   const searchKeyword = search ? `&searchKeyword=${search}` : "";
   try {
     const res = await httpClient.get(
-      `${BASE_URL}/chat/${userId}?relationType=${relationType}${searchKeyword}`
+      `${BASE_URL}/chat/${userId}?relationType=${relationType}${searchKeyword}`,
     );
     return res.data;
   } catch (error) {
