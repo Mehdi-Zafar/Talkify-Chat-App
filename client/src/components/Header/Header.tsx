@@ -1,12 +1,13 @@
 import logo from "../../assets/talkify-logo.svg";
 import avatarImg from "../../assets/avatar.png";
 import ThemeToggleButton from "../ThemeToggleButton/ThemeToggleButton";
-import { IconButton, Tooltip } from "@material-tailwind/react";
+import Tooltip from "@material-tailwind/react/components/Tooltip";
+import IconButton from "@material-tailwind/react/components/IconButton";
 import {
   ChatBubbleBottomCenterTextIcon,
   Cog6ToothIcon,
 } from "@heroicons/react/24/outline";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "@tanstack/react-router";
 import { useUserStore } from "../../zustand";
 
 export default function Header() {
@@ -19,7 +20,7 @@ export default function Header() {
         <div className="flex flex-col items-center justify-center gap-2">
           <IconButton
             className="bg-transparent"
-            onClick={() => navigate("/chat")}
+            onClick={() => navigate({ to: "/chat" })}
           >
             <ChatBubbleBottomCenterTextIcon width={20} stroke="white" />
           </IconButton>
@@ -29,7 +30,7 @@ export default function Header() {
         <Tooltip content="Settings" placement="right">
           <IconButton
             className="bg-transparent"
-            onClick={() => navigate("/settings")}
+            onClick={() => navigate({ to: "/settings" })}
           >
             <Cog6ToothIcon width={20} stroke="white" />
           </IconButton>
@@ -40,7 +41,7 @@ export default function Header() {
         <Tooltip content="Profile" placement="right">
           <IconButton
             className="bg-transparent"
-            onClick={() => navigate("/profile")}
+            onClick={() => navigate({ to: "/profile" })}
           >
             <img
               src={user?.image}

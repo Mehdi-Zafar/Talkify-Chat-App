@@ -15,7 +15,7 @@ import { Chat, User, UserRelationType } from "@/utils/contracts";
 import { ChangeEvent, useState } from "react";
 import { twMerge } from "tailwind-merge";
 import { useDebounce } from "use-debounce";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "@tanstack/react-router";
 
 export default function NewChatModal({ openModal, handleOpen }) {
   const { user } = useUserStore();
@@ -35,7 +35,7 @@ export default function NewChatModal({ openModal, handleOpen }) {
       const res = await UsersAPI.getChatUsers(
         user?.id,
         UserRelationType.NON_CONTACT,
-        search
+        search,
       );
       return res.data;
     } catch (err) {
@@ -55,7 +55,7 @@ export default function NewChatModal({ openModal, handleOpen }) {
 
       return [newChat, ...oldChatsData];
     });
-    navigate(`/chat/new?userId=${selectedUser?.id}`);
+    navigate({ to: `/chat/new?userId=${selectedUser?.id}` });
     handleOpen();
   }
 
@@ -89,7 +89,7 @@ export default function NewChatModal({ openModal, handleOpen }) {
                     className={twMerge(
                       `flex items-center gap-2 border border-gray-100 dark:border-gray-800 rounded-lg py-2 px-4 cursor-pointer hover:opacity-80`,
                       selectedUser?.id === user?.id &&
-                        "bg-lightPrimary dark:bg-darkPrimary"
+                        "bg-lightPrimary dark:bg-darkPrimary",
                     )}
                     onClick={() => setSelectedUser(user)}
                   >
@@ -100,7 +100,7 @@ export default function NewChatModal({ openModal, handleOpen }) {
                     <h3
                       className={twMerge(
                         `font-medium text-lightText dark:text-darkText`,
-                        selectedUser?.id === user?.id && "text-darkText"
+                        selectedUser?.id === user?.id && "text-darkText",
                       )}
                     >
                       {user?.user_name}

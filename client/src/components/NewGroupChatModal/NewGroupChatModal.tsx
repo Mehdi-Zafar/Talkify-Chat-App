@@ -187,7 +187,7 @@ export default function NewGroupChatModal({ openModal, handleOpen }) {
                             onChange={() => toggleMembers(user)}
                             checked={
                               !!selectedMembers?.find(
-                                (member) => member?.id === user?.id
+                                (member) => member?.id === user?.id,
                               )
                             }
                           />
