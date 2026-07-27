@@ -1,5 +1,5 @@
-import { RouterProvider } from "react-router-dom";
-import { router } from "./routes";
+import { RouterProvider } from "@tanstack/react-router";
+import { router } from "./router";
 import { useAuthStore, useThemeStore } from "./zustand";
 import { useEffect, useLayoutEffect } from "react";
 import { Theme } from "./utils/contracts";
@@ -20,7 +20,6 @@ function App() {
 
   useEffect(() => {
     const root = window.document.documentElement;
-
     if (theme === Theme.DARK) {
       root.classList.add("dark");
     } else {
@@ -31,9 +30,10 @@ function App() {
   useLayoutEffect(() => {
     initializeAuth();
   }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router}></RouterProvider>
+      <RouterProvider router={router} />
     </QueryClientProvider>
   );
 }
