@@ -1,4 +1,3 @@
-import { PhoneNumberUtil } from "google-libphonenumber";
 import toast, { ToastType } from "react-hot-toast";
 import { io } from "socket.io-client";
 
@@ -15,16 +14,6 @@ export const getSocketInstance = () => {
 //   import.meta.env.VITE_SUPABASE_URL,
 //   import.meta.env.VITE_SUPABASE_API_KEY
 // );
-
-const phoneUtil = PhoneNumberUtil.getInstance();
-
-export const isPhoneValid = (phone: string) => {
-  try {
-    return phoneUtil.isValidNumber(phoneUtil.parseAndKeepRawInput(phone));
-  } catch (error) {
-    return false;
-  }
-};
 
 export const showToast = (msg: string, type?: ToastType) => {
   if (type === "success") {

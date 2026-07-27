@@ -1,6 +1,8 @@
 import { useState } from "react";
-import { PhoneInput } from "react-international-phone";
-import "react-international-phone/style.css";
+import PhoneInput from "react-phone-number-input";
+import { isValidPhoneNumber } from "react-phone-number-input";
+// Minimal CSS — only resets, no opinionated styles
+import "react-phone-number-input/style.css";
 
 export default function PhoneNumberField({
   label,
@@ -11,26 +13,32 @@ export default function PhoneNumberField({
   register,
   error,
 }: InputProps) {
-  const [phone, setPhone] = useState(value);
+  const [phone, setPhone] = useState<string>(value);
+
   return (
     <div>
-      <label className="block text-sm font-semibold leading-6 text-lightText dark:text-darkText mb-1">
-        {label}
-      </label>
+      {label && (
+        <label className="block text-sm font-semibold leading-6 text-lightText dark:text-darkText mb-1">
+          {label}
+        </label>
+      )}
       <PhoneInput
-        defaultCountry="pk"
+        defaultCountry="PK"
         value={phone}
-        {...register}
+        onChange={(val) => setPhone(val ?? "")}
         disabled={disabled}
         name={name}
         placeholder={placeholder}
-        onChange={(phone) => setPhone(phone)}
-        className="!bg-lightBg dark:!bg-darkBg"
-        countrySelectorStyleProps={{
-          buttonClassName:
-            "!bg-lightBg dark:!bg-darkBg border !border-gray-50 dark:!border-darkPrimary",
+        // Tailwind classes applied via these props
+        className="flex gap-2 !bg-lightBg dark:!bg-darkBg"
+        numberInputProps={{
+          className:
+            "flex-1 rounded-md border border-gray-50 dark:border-darkPrimary px-4 py-2 text-lightText dark:text-darkText bg-lightBg dark:bg-darkBg shadow-sm placeholder:text-gray-400 outline-none sm:text-sm sm:leading-6",
         }}
-        inputClassName="flex-1 rounded-md border !border-gray-50 dark:!border-darkPrimary px-4 py-2 !text-lightText dark:!text-darkText !bg-lightBg dark:!bg-darkBg shadow-sm placeholder:text-gray-400 outline-none sm:text-sm sm:leading-6"
+        countrySelectProps={{
+          className:
+            "bg-lightBg dark:bg-darkBg border border-gray-50 dark:border-darkPrimary rounded-md text-lightText dark:text-darkText",
+        }}
       />
       {error && (
         <small className="text-red-500 font-medium uppercase mt-2 block">
