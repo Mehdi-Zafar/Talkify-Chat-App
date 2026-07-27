@@ -1,8 +1,7 @@
 import logo from "../../assets/talkify-logo.svg";
 import avatarImg from "../../assets/avatar.png";
 import ThemeToggleButton from "../ThemeToggleButton/ThemeToggleButton";
-import Tooltip from "@material-tailwind/react/components/Tooltip";
-import IconButton from "@material-tailwind/react/components/IconButton";
+import { IconButton, Tooltip } from "@material-tailwind/react";
 import {
   ChatBubbleBottomCenterTextIcon,
   Cog6ToothIcon,
