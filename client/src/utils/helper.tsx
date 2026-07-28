@@ -1,4 +1,4 @@
-import toast, { ToastType } from "react-hot-toast";
+import { toast } from "sonner";
 import { io } from "socket.io-client";
 
 // "undefined" means the URL will be computed from the `window.location` object
@@ -15,15 +15,19 @@ export const getSocketInstance = () => {
 //   import.meta.env.VITE_SUPABASE_API_KEY
 // );
 
-export const showToast = (msg: string, type?: ToastType) => {
+export const showToast = (
+  msg: string,
+  type?: "success" | "error" | "loading",
+) => {
+  const options = { duration: 3000 };
   if (type === "success") {
-    toast.success(msg, { position: "top-right", duration: 3000 });
+    toast.success(msg, options);
   } else if (type === "error") {
-    toast.error(msg, { position: "top-right", duration: 3000 });
+    toast.error(msg, options);
   } else if (type === "loading") {
-    toast.loading(msg, { position: "top-right", duration: 3000 });
+    toast.loading(msg, options);
   } else {
-    toast(msg, { position: "top-right", duration: 3000 });
+    toast(msg, options);
   }
 };
 
