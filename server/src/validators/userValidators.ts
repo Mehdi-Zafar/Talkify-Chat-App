@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { UserRelationType } from "../lib/models";
 
 export const idParamSchema = z.object({
   // Ensures it only contains digits, making it safe to parse later
@@ -31,7 +32,7 @@ export const updateUserByEmailSchema = z
   });
 
 export const chatUsersQuerySchema = z.object({
-  relationType: z.enum(["contacts", "non-contacts"], {
+  relationType: z.enum(UserRelationType, {
     error: "relationType must be 'contacts' or 'non-contacts'",
   }),
   search: z.string().optional(),
