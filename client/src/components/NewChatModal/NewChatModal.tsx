@@ -1,11 +1,11 @@
 import {
-  Button,
   Dialog,
-  DialogBody,
-  DialogFooter,
+  DialogContent,
   DialogHeader,
-  Spinner,
-} from "@material-tailwind/react";
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import SearchInput from "../SearchInput/SearchInput";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { UsersAPI } from "../../api";
@@ -14,14 +14,14 @@ import { useUserStore } from "../../zustand";
 import { Chat, User, UserRelationType } from "@/utils/contracts";
 import { ChangeEvent, useState } from "react";
 import { twMerge } from "tailwind-merge";
-import { useDebounce } from "use-debounce";
 import { useNavigate } from "@tanstack/react-router";
+import { useDebounce } from "@/hooks/useDebounce";
 
 export default function NewChatModal({ openModal, handleOpen }) {
   const { user } = useUserStore();
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [searchKeyword, setSearchKeyword] = useState("");
-  const [search] = useDebounce(searchKeyword, 500);
+  const search = useDebounce(searchKeyword, 500);
   const { data: users, isFetching } = useQuery({
     queryKey: ["users", search],
     queryFn: getUsers,
@@ -52,7 +52,6 @@ export default function NewChatModal({ openModal, handleOpen }) {
     newChat.name = selectedUser?.user_name;
     queryClient.setQueryData(["chats", user?.id], (oldChatsData: any) => {
       if (!oldChatsData) return oldChatsData;
-
       return [newChat, ...oldChatsData];
     });
     navigate({ to: `/chat/new?userId=${selectedUser?.id}` });
@@ -60,34 +59,33 @@ export default function NewChatModal({ openModal, handleOpen }) {
   }
 
   return (
-    <Dialog
-      open={openModal}
-      handler={handleOpen}
-      size="md"
-      className="px-2 relative bg-lightBg dark:bg-darkBg"
-    >
-      <DialogHeader className="text-lightText dark:text-darkText">
-        New Chat
-      </DialogHeader>
-      <form>
-        <DialogBody className="py-0">
-          <div className="my-4">
+    <Dialog open={openModal} onOpenChange={handleOpen}>
+      <DialogContent className="max-w-md bg-lightBg dark:bg-darkBg">
+        <DialogHeader>
+          <DialogTitle className="text-lightText dark:text-darkText">
+            New Chat
+          </DialogTitle>
+        </DialogHeader>
+
+        <form>
+          <div className="flex flex-col gap-4">
             <SearchInput
               value={searchKeyword}
               onChange={(e: ChangeEvent<HTMLInputElement>) =>
                 setSearchKeyword(e.target.value)
               }
             />
-            <div className="mt-4 flex flex-col gap-4 h-[50vh] overflow-y-auto">
+            <div className="flex flex-col gap-3 h-[50vh] overflow-y-auto">
               {isFetching ? (
                 <div className="h-full flex justify-center items-center">
-                  <Spinner color="blue" />
+                  <div className="h-5 w-5 animate-spin rounded-full border-2 border-lightPrimary border-t-transparent" />
                 </div>
               ) : users?.length > 0 ? (
                 users?.map((user) => (
                   <div
+                    key={user?.id}
                     className={twMerge(
-                      `flex items-center gap-2 border border-gray-100 dark:border-gray-800 rounded-lg py-2 px-4 cursor-pointer hover:opacity-80`,
+                      "flex items-center gap-2 border border-gray-100 dark:border-gray-800 rounded-lg py-2 px-4 cursor-pointer hover:opacity-80",
                       selectedUser?.id === user?.id &&
                         "bg-lightPrimary dark:bg-darkPrimary",
                     )}
@@ -95,11 +93,11 @@ export default function NewChatModal({ openModal, handleOpen }) {
                   >
                     <img
                       className="w-10 h-10 rounded-full"
-                      src={user?.image ? user?.image : maleAvatar}
+                      src={user?.image ?? maleAvatar}
                     />
                     <h3
                       className={twMerge(
-                        `font-medium text-lightText dark:text-darkText`,
+                        "font-medium text-lightText dark:text-darkText",
                         selectedUser?.id === user?.id && "text-darkText",
                       )}
                     >
@@ -108,35 +106,23 @@ export default function NewChatModal({ openModal, handleOpen }) {
                   </div>
                 ))
               ) : (
-                <h3 className="h-full flex items-center justify-center">
+                <h3 className="h-full flex items-center justify-center text-sm text-gray-400">
                   No Users Found!
                 </h3>
               )}
             </div>
           </div>
-        </DialogBody>
-        <DialogFooter>
-          <>
-            <Button
-              variant="text"
-              color="blue"
-              type="button"
-              onClick={handleOpen}
-              className="mr-1"
-            >
-              <span>Cancel</span>
+
+          <DialogFooter className="mt-4">
+            <Button variant="ghost" type="button" onClick={handleOpen}>
+              Cancel
             </Button>
-            <Button
-              variant="gradient"
-              color="blue"
-              disabled={!selectedUser?.id}
-              onClick={handleNewChat}
-            >
-              <span>Confirm</span>
+            <Button disabled={!selectedUser?.id} onClick={handleNewChat}>
+              Confirm
             </Button>
-          </>
-        </DialogFooter>
-      </form>
+          </DialogFooter>
+        </form>
+      </DialogContent>
     </Dialog>
   );
 }

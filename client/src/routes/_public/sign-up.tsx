@@ -1,29 +1,25 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Link, useNavigate } from "@tanstack/react-router";
-import {
-  ButtonComp,
-  InputField,
-  PhoneNumberField,
-  SelectField,
-} from "../../components";
+import { InputField, PhoneNumberField, SelectField } from "../../components";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRef, useState } from "react";
-import Button from "@material-tailwind/react/components/Button";
 import {
   Dialog,
+  DialogContent,
   DialogHeader,
-  DialogBody,
+  DialogTitle,
   DialogFooter,
-} from "@material-tailwind/react/components/Dialog";
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { showToast } from "../../utils/helper";
-import { LockClosedIcon, PencilIcon } from "@heroicons/react/24/outline";
 import { AuthAPI } from "../../api";
 import { Purpose, User } from "../../utils/contracts";
 import OtpInput from "react-otp-input";
 import { sendOtp, verifyOtp } from "../../api/OtpAPI/OtpAPI";
 import { isValidPhoneNumber } from "react-phone-number-input";
+import logoImg from "../../assets/logo.webp";
 
 export const Route = createFileRoute("/_public/sign-up")({
   component: SignUp,
@@ -75,12 +71,12 @@ function SignUp() {
   const handleOpen = () => setOpenModal((prev) => !prev);
 
   async function formSubmit(data: User) {
-    const otpres = await verifyOtp({
+    await verifyOtp({
       email: getValues("email"),
       otp,
       purpose: Purpose.SignUp,
     });
-    const res = await AuthAPI.register(data);
+    await AuthAPI.register(data);
     showToast("Sign Up Successful!");
     reset();
     handleOpen();
@@ -92,24 +88,14 @@ function SignUp() {
   async function sendOtpOnEmail() {
     setLoading(true);
     try {
-      const email = getValues("email");
-      const res = await sendOtp({ email: getValues("email") });
-      showToast("OTP sent to our email.");
+      await sendOtp({ email: getValues("email") });
+      showToast("OTP sent to your email.");
       handleOpen();
     } catch (err) {
       console.log(err);
     }
     setLoading(false);
   }
-
-  // async function verifyEmailOtp() {
-  //   try {
-  //     const res = await verifyOtp({ email: getValues("email"), otp });
-  //     showToast("OTP Verified");
-  //   } catch (err) {
-  //     showToast("Error");
-  //   }
-  // }
 
   function submitForm() {
     otp?.length < 6
@@ -119,157 +105,138 @@ function SignUp() {
 
   return (
     <>
-      <div className="h-screen py-8 flex justify-center">
-        <div className="w-4/5 rounded-xl overflow-clip justify-center shadow-sm border border-gray-50 dark:border-darkPrimary">
-          {/* <div className="w-2/5">
-            <img
-              src={signUpImg}
-              alt="Sign In Wallpaper"
-              className="w-full h-full object-cover"
-            />
-          </div> */}
-          <div className="w-full min-h-full flex-1 px-6 py-8 lg:px-8 bg-gray-50 dark:bg-darkBg">
-            <div className="w-full flex flex-col items-center gap-4">
-              <span className="bg-lightPrimary dark:bg-darkPrimary w-12 h-12 rounded-full flex justify-center">
-                <LockClosedIcon width={24} stroke="white" />
-              </span>
-              <h2 className="text-center text-3xl uppercase font-bold leading-9 tracking-tight text-lightText dark:text-darkText">
-                Sign up
-              </h2>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-darkBg px-4 py-8">
+        <div className="w-full max-w-2xl bg-white dark:bg-darkPrimary rounded-xl shadow-md border border-gray-100 dark:border-darkPrimary px-8 py-10">
+          <div className="flex flex-col items-center gap-3 mb-8">
+            <img src={logoImg} alt="Talkify" className="w-20 object-contain" />
+            <h2 className="text-center text-2xl font-bold tracking-tight text-lightText dark:text-darkText uppercase">
+              Sign up
+            </h2>
+          </div>
+
+          <form>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <InputField
+                label="Username"
+                name="user_name"
+                placeholder="Enter Username"
+                register={{ ...register("user_name") }}
+                error={errors["user_name"]}
+              />
+              <InputField
+                label="Email"
+                name="email"
+                placeholder="Enter Email"
+                register={{ ...register("email") }}
+                error={errors["email"]}
+              />
+              <PhoneNumberField
+                label="Phone Number"
+                name="phone_number"
+                placeholder="Enter Phone Number"
+                value={getValues("phone_number")}
+                register={{ ...register("phone_number") }}
+                error={errors["phone_number"]}
+              />
+              <SelectField
+                label="Gender"
+                options={[
+                  { label: "Male", value: "male" },
+                  { label: "Female", value: "female" },
+                ]}
+                placeholder="Select Gender"
+                register={{ ...register("gender") }}
+                error={errors["gender"]}
+              />
+              <InputField
+                label="Password"
+                name="password"
+                type="password"
+                placeholder="Enter Password"
+                register={{ ...register("password") }}
+                error={errors["password"]}
+              />
+              <InputField
+                label="Confirm Password"
+                name="confirm_password"
+                type="password"
+                placeholder="Enter Confirm Password"
+                register={{ ...register("confirm_password") }}
+                error={errors["confirm_password"]}
+              />
             </div>
 
-            <div className="mt-8 w-full max-w-screen-md mx-auto">
-              <form>
-                <div className="grid grid-cols-2 gap-4">
-                  <InputField
-                    label="Username"
-                    name="user_name"
-                    placeholder="Enter Username"
-                    register={{ ...register("user_name") }}
-                    error={errors["user_name"]}
-                  />
-                  <InputField
-                    label="Email"
-                    name="email"
-                    placeholder="Enter Email"
-                    register={{ ...register("email") }}
-                    error={errors["email"]}
-                  />
-                  <PhoneNumberField
-                    label="Phone Number"
-                    name="phone_number"
-                    placeholder="Enter Phone Number"
-                    value={getValues("phone_number")}
-                    register={{ ...register("phone_number") }}
-                    error={errors["phone_number"]}
-                  />
-                  <SelectField
-                    label="Gender"
-                    options={[
-                      { label: "Male", value: "male" },
-                      { label: "Female", value: "female" },
-                    ]}
-                    placeholder="Select Gender"
-                    register={{ ...register("gender") }}
-                    error={errors["gender"]}
-                  />
-                  <InputField
-                    label="Password"
-                    name="password"
-                    type="password"
-                    placeholder="Enter Password"
-                    register={{ ...register("password") }}
-                    error={errors["password"]}
-                  />
-                  <InputField
-                    label="Confirm Password"
-                    name="confirm_password"
-                    type="password"
-                    placeholder="Enter Confirm Password"
-                    register={{ ...register("confirm_password") }}
-                    error={errors["confirm_password"]}
-                  />
-                </div>
-                <Dialog
-                  open={openModal}
-                  handler={handleOpen}
-                  size="lg"
-                  className="px-2 relative bg-lightBg dark:bg-darkBg"
-                >
-                  <DialogHeader className="text-lightText dark:text-darkText">
-                    Verify OTP
-                  </DialogHeader>
-                  <form ref={formRef} onSubmit={handleSubmit(formSubmit)}>
-                    <DialogBody>
-                      <div className="flex flex-col gap-4 items-center justify-center my-8">
-                        <OtpInput
-                          value={otp}
-                          onChange={setOtp}
-                          numInputs={6}
-                          renderSeparator={<span>&nbsp;-&nbsp;</span>}
-                          renderInput={(props) => (
-                            <input
-                              {...props}
-                              className="!w-12 !h-12 rounded-md bg-lightBody dark:bg-darkBody !text-lightText dark:!text-darkText border text-lg font-semibold"
-                            />
-                          )}
-                        />
-                        <h3 className="font-medium">
-                          We have sent an otp to your email address{" "}
-                          {getValues("email")}. Please verify!
-                        </h3>
-                      </div>
-                    </DialogBody>
-                    <DialogFooter>
-                      <>
-                        <Button
-                          variant="text"
-                          color="blue"
-                          type="button"
-                          onClick={() => setOpenModal(false)}
-                          className="mr-1"
-                        >
-                          <span>Cancel</span>
-                        </Button>
-                        <Button
-                          variant="gradient"
-                          color="blue"
-                          onClick={() => {
-                            formRef ? submitForm() : {};
-                          }}
-                        >
-                          <span>Confirm</span>
-                        </Button>
-                      </>
-                    </DialogFooter>
-                  </form>
-                </Dialog>
-                <div className="mt-6 flex items-center gap-4">
-                  <ButtonComp
-                    label="Sign Up"
-                    type="button"
-                    onClick={async () => {
-                      if (await trigger()) {
-                        await sendOtpOnEmail();
-                      }
-                    }}
-                    loading={loading}
-                  />
-                </div>
-              </form>
-              <p className="mt-6 text-center text-sm text-gray-500">
-                Already a member?{" "}
-                <Link
-                  to="/sign-in"
-                  className="font-semibold leading-6 text-indigo-600 hover:text-indigo-500"
-                >
-                  Sign In
-                </Link>
-              </p>
+            <div className="mt-6">
+              <Button
+                type="button"
+                className="w-full"
+                onClick={async () => {
+                  if (await trigger()) {
+                    await sendOtpOnEmail();
+                  }
+                }}
+                loading={loading}
+              >
+                Sign Up
+              </Button>
             </div>
-          </div>
+          </form>
+
+          <p className="mt-6 text-center text-sm text-gray-500">
+            Already a member?{" "}
+            <Link
+              to="/sign-in"
+              className="font-semibold leading-6 text-indigo-600 hover:text-indigo-500"
+            >
+              Sign In
+            </Link>
+          </p>
         </div>
       </div>
+
+      <Dialog open={openModal} onOpenChange={handleOpen}>
+        <DialogContent className="max-w-2xl bg-lightBg dark:bg-darkBg">
+          <DialogHeader>
+            <DialogTitle className="text-lightText dark:text-darkText">
+              Verify OTP
+            </DialogTitle>
+          </DialogHeader>
+
+          <form ref={formRef} onSubmit={handleSubmit(formSubmit)}>
+            <div className="flex flex-col gap-4 items-center justify-center my-8">
+              <OtpInput
+                value={otp}
+                onChange={setOtp}
+                numInputs={6}
+                renderSeparator={<span>&nbsp;-&nbsp;</span>}
+                renderInput={(props) => (
+                  <input
+                    {...props}
+                    className="w-12! h-12! rounded-md bg-lightBody dark:bg-darkBody text-lightText! dark:text-darkText! border text-lg font-semibold"
+                  />
+                )}
+              />
+              <h3 className="font-medium text-lightText dark:text-darkText">
+                We have sent an otp to your email address {getValues("email")}.
+                Please verify!
+              </h3>
+            </div>
+
+            <DialogFooter>
+              <Button
+                variant="ghost"
+                type="button"
+                onClick={() => setOpenModal(false)}
+              >
+                Cancel
+              </Button>
+              <Button type="button" onClick={submitForm}>
+                Confirm
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

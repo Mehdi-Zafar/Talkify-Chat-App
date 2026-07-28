@@ -1,6 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { LockClosedIcon } from "@heroicons/react/24/outline";
-import { ButtonComp, InputField } from "../../components";
+import { InputField } from "../../components";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -14,6 +13,8 @@ import {
   useRouterState,
   useNavigate,
 } from "@tanstack/react-router";
+import { Button } from "@/components/ui/button";
+import logoImg from "@/assets/logo.webp";
 
 export const Route = createFileRoute("/_public/reset-password")({
   component: ResetPassword,
@@ -44,8 +45,6 @@ function ResetPassword() {
   const {
     register,
     handleSubmit,
-    reset,
-    getValues,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(FormSchema),
@@ -55,15 +54,16 @@ function ResetPassword() {
   const [userData, setUserData] = useState(!!state);
 
   const { mutateAsync, isPending } = useMutation({
-    mutationFn: (data: ResetPasswordPayload) => {
-      return AuthAPI.resetPassword(data);
-    },
+    mutationFn: (data: ResetPasswordPayload) => AuthAPI.resetPassword(data),
   });
 
-  async function formSubmit(data) {
+  async function formSubmit(data: {
+    email: string;
+    password: string;
+    confirm_password: string;
+  }) {
     try {
-      const { email, password } = data;
-      const res = await mutateAsync({ email, password });
+      await mutateAsync({ email: data.email, password: data.password });
       setTimeout(() => {
         navigate({ to: "/sign-in" });
       }, 1000);
@@ -73,15 +73,11 @@ function ResetPassword() {
   useEffect(() => {
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
       event.preventDefault();
-      event.returnValue = ""; // Required for Chrome to show a warning
+      event.returnValue = "";
       setUserData(false);
     };
-
     window.addEventListener("beforeunload", handleBeforeUnload);
-
-    return () => {
-      window.removeEventListener("beforeunload", handleBeforeUnload);
-    };
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
   }, []);
 
   if (!userData) {
@@ -89,12 +85,10 @@ function ResetPassword() {
   }
 
   return (
-    <div className="flex flex-col items-center justify-center bg-gray-50 dark:bg-darkBg h-full overflow-auto">
-      <div className="sm:mx-auto sm:w-full sm:max-w-sm flex flex-col items-center gap-4">
-        <span className="bg-lightPrimary dark:bg-darkPrimary w-12 h-12 rounded-full flex justify-center">
-          <LockClosedIcon width={24} stroke="white" />
-        </span>
-        <h2 className="text-center text-2xl font-bold leading-9 tracking-tight text-lightText dark:text-darkText uppercase">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-darkBg px-4">
+      <div className="w-full max-w-sm flex flex-col items-center gap-4">
+        <img src={logoImg} alt="Talkify" className="w-20 object-contain" />
+        <h2 className="text-center text-2xl font-bold tracking-tight text-lightText dark:text-darkText uppercase">
           Reset Password
         </h2>
         <form
@@ -118,14 +112,16 @@ function ResetPassword() {
             error={errors["password"]}
           />
           <InputField
-            placeholder="Enter Password"
+            placeholder="Enter Confirm Password"
             containerClass="block w-full"
             type="password"
             label="Confirm Password"
             register={{ ...register("confirm_password") }}
             error={errors["confirm_password"]}
           />
-          <ButtonComp label="Submit" className="mt-4" loading={isPending} />
+          <Button className="mt-4 w-full" loading={isPending}>
+            Submit
+          </Button>
         </form>
         <Link
           to="/sign-in"

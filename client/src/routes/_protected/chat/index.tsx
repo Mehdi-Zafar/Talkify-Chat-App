@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import logo from "@/assets/logo.png";
+import logo from "@/assets/logo.webp";
 
 export const Route = createFileRoute("/_protected/chat/")({
   component: ChatEmpty,

@@ -1,20 +1,19 @@
 import { createFileRoute } from "@tanstack/react-router";
-import logo from "@/assets/logo.png";
-import avatarImg from "@/assets/avatar.png";
-import { EllipsisVerticalIcon } from "@heroicons/react/24/outline";
+import avatarImg from "@/assets/avatar.webp";
 import {
-  Menu,
-  MenuHandler,
-  MenuList,
-  MenuItem,
-} from "@material-tailwind/react/components/Menu";
-import Spinner from "@material-tailwind/react/components/Spinner";
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ChatAPI } from "@/api";
 import { useEffect, useRef, useState } from "react";
 import { useSocketStore, useUserStore } from "@/zustand";
 import { Message, SocketEvent } from "@/utils/contracts";
 import { formatMessageTime, groupMessagesByDate } from "@/utils/helper";
+import { EllipsisVerticalIcon } from "lucide-react";
 
 export const Route = createFileRoute("/_protected/chat/$id")({
   component: ChatDisplay,
@@ -130,7 +129,7 @@ function ChatDisplay() {
   if (fetchingChats) {
     return (
       <div className="h-full flex justify-center items-center">
-        <Spinner color="blue" />
+        <div className="h-5 w-5 animate-spin rounded-full border-2 border-lightPrimary border-t-transparent" />
       </div>
     );
   }
@@ -149,21 +148,23 @@ function ChatDisplay() {
               {chat?.name}
             </h3>
           </div>
-          <Menu>
-            <MenuHandler>
-              <EllipsisVerticalIcon
-                width={25}
-                className="text-lightText dark:text-darkText cursor-pointer"
-              />
-            </MenuHandler>
-            <MenuList className="bg-lightBg dark:bg-darkBg border-gray-50 dark:border-darkPrimary">
-              <MenuItem className="flex items-center gap-2">xZX</MenuItem>
-              <MenuItem className="flex items-center gap-2">xx</MenuItem>
-              <MenuItem className="flex items-center gap-2">xzXZ</MenuItem>
-              <hr className="my-2 border-blue-gray-50" />
-              <MenuItem className="flex items-center gap-2">Sign Out</MenuItem>
-            </MenuList>
-          </Menu>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button>
+                <EllipsisVerticalIcon
+                  width={25}
+                  className="text-lightText dark:text-darkText cursor-pointer"
+                />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="bg-lightBg dark:bg-darkBg border-gray-50 dark:border-darkPrimary">
+              <DropdownMenuItem>Option 1</DropdownMenuItem>
+              <DropdownMenuItem>Option 2</DropdownMenuItem>
+              <DropdownMenuItem>Option 3</DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem>Sign Out</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         <div

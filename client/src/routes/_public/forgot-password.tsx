@@ -1,23 +1,24 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { ButtonComp, CountdownTimer, InputField } from "../../components";
-import { LockClosedIcon } from "@heroicons/react/24/outline";
+import { CountdownTimer, InputField } from "../../components";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { useMutation } from "@tanstack/react-query";
 import { sendOtp, verifyOtp } from "../../api/OtpAPI/OtpAPI";
 import { OtpRequest, OtpResponse, Purpose } from "../../utils/contracts";
-import Button from "@material-tailwind/react/components/Button";
 import {
   Dialog,
-  DialogBody,
-  DialogFooter,
+  DialogContent,
   DialogHeader,
-} from "@material-tailwind/react/components/Dialog";
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import OTPInput from "react-otp-input";
 import { useRef, useState } from "react";
 import { showToast } from "../../utils/helper";
+import logoImg from "@/assets/logo.webp";
 
 export const Route = createFileRoute("/_public/forgot-password")({
   component: ForgotPassword,
@@ -31,7 +32,6 @@ function ForgotPassword() {
   const {
     register,
     handleSubmit,
-    reset,
     getValues,
     formState: { errors },
   } = useForm({ resolver: zodResolver(FormSchema) });
@@ -42,9 +42,7 @@ function ForgotPassword() {
   const navigate = useNavigate();
 
   const { mutateAsync, isPending } = useMutation({
-    mutationFn: (data: OtpRequest) => {
-      return sendOtp(data);
-    },
+    mutationFn: (data: OtpRequest) => sendOtp(data),
   });
 
   function handleOpen() {
@@ -69,7 +67,7 @@ function ForgotPassword() {
     } catch (err) {}
   }
 
-  async function submitCode(e) {
+  async function submitCode(e: React.FormEvent) {
     e.preventDefault();
     try {
       const otpres = await verifyOtp({
@@ -88,12 +86,10 @@ function ForgotPassword() {
 
   return (
     <>
-      <div className="flex flex-col items-center justify-center bg-gray-50 dark:bg-darkBg h-full overflow-auto">
-        <div className="sm:mx-auto sm:w-full sm:max-w-sm flex flex-col items-center gap-4">
-          <span className="bg-lightPrimary dark:bg-darkPrimary w-12 h-12 rounded-full flex justify-center">
-            <LockClosedIcon width={24} stroke="white" />
-          </span>
-          <h2 className="text-center text-2xl font-bold leading-9 tracking-tight text-lightText dark:text-darkText uppercase">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-darkBg px-4">
+        <div className="w-full max-w-sm flex flex-col items-center gap-4">
+          <img src={logoImg} alt="Talkify" className="w-20 object-contain" />
+          <h2 className="text-center text-2xl font-bold tracking-tight text-lightText dark:text-darkText uppercase">
             Forgot Password
           </h2>
           <form
@@ -106,7 +102,9 @@ function ForgotPassword() {
               register={{ ...register("email") }}
               error={errors["email"]}
             />
-            <ButtonComp label="Submit" className="mt-4" loading={isPending} />
+            <Button className="mt-4 w-full" loading={isPending}>
+              Submit
+            </Button>
           </form>
           <Link
             to="/sign-in"
@@ -116,19 +114,18 @@ function ForgotPassword() {
           </Link>
         </div>
       </div>
-      <Dialog
-        open={openModal}
-        handler={handleOpen}
-        size="lg"
-        className="px-2 relative bg-lightBg dark:bg-darkBg"
-      >
-        <DialogHeader className="text-lightText dark:text-darkText">
-          Verify OTP
-        </DialogHeader>
-        <form ref={formRef} onSubmit={submitCode}>
-          <DialogBody>
+
+      <Dialog open={openModal} onOpenChange={handleOpen}>
+        <DialogContent className="max-w-2xl bg-lightBg dark:bg-darkBg">
+          <DialogHeader>
+            <DialogTitle className="text-lightText dark:text-darkText">
+              Verify OTP
+            </DialogTitle>
+          </DialogHeader>
+
+          <form ref={formRef} onSubmit={submitCode}>
             <div className="flex flex-col gap-4 items-center justify-center my-8">
-              <h3 className="font-medium">
+              <h3 className="font-medium text-lightText dark:text-darkText">
                 We have sent an otp to your email address {getValues("email")}.
                 Please verify!
               </h3>
@@ -140,7 +137,7 @@ function ForgotPassword() {
                 renderInput={(props) => (
                   <input
                     {...props}
-                    className="!w-12 !h-12 rounded-md bg-lightBody dark:bg-darkBody !text-lightText dark:!text-darkText border text-lg font-semibold"
+                    className="w-12! h-12! rounded-md bg-lightBody dark:bg-darkBody text-lightText! dark:text-darkText! border text-lg font-semibold"
                   />
                 )}
               />
@@ -156,30 +153,17 @@ function ForgotPassword() {
                 </span>
               </h5>
             </div>
-          </DialogBody>
-          <DialogFooter>
-            <>
-              <Button
-                variant="text"
-                color="blue"
-                type="button"
-                onClick={handleOpen}
-                className="mr-1"
-              >
-                <span>Cancel</span>
+
+            <DialogFooter>
+              <Button variant="ghost" type="button" onClick={handleOpen}>
+                Cancel
               </Button>
-              <Button
-                variant="gradient"
-                color="blue"
-                onClick={() => {
-                  formRef ? submitForm() : {};
-                }}
-              >
-                <span>Confirm</span>
+              <Button type="button" onClick={submitForm}>
+                Confirm
               </Button>
-            </>
-          </DialogFooter>
-        </form>
+            </DialogFooter>
+          </form>
+        </DialogContent>
       </Dialog>
     </>
   );
