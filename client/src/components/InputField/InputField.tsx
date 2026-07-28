@@ -1,4 +1,4 @@
-import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
+import { EyeIcon, EyeOffIcon } from "lucide-react";
 import { HTMLInputTypeAttribute, useState } from "react";
 import { twMerge } from "tailwind-merge";
 
@@ -21,7 +21,7 @@ export default function InputField({
         <label
           className={twMerge(
             `block text-sm font-semibold leading-6 text-lightText dark:text-darkText`,
-            labelClass
+            labelClass,
           )}
         >
           {label}
@@ -34,7 +34,7 @@ export default function InputField({
           type={showPassword ? "text" : type}
           className={twMerge(
             `block w-full rounded-md border border-gray-50 dark:border-darkPrimary px-4 py-2 bg-white dark:bg-darkBody text-lightText dark:text-darkText shadow-sm placeholder:text-gray-400 outline-none sm:text-sm sm:leading-6`,
-            inputClass
+            inputClass,
           )}
           {...register}
           disabled={disabled}
@@ -45,7 +45,7 @@ export default function InputField({
             onClick={() => setShowPassword((prev) => !prev)}
           >
             {showPassword ? (
-              <EyeSlashIcon className="w-4 text-lightText dark:text-darkText" />
+              <EyeOffIcon className="w-4 text-lightText dark:text-darkText" />
             ) : (
               <EyeIcon className="w-4 text-lightText dark:text-darkText" />
             )}

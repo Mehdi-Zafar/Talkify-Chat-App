@@ -67,6 +67,9 @@ export const getChatUsers = async (
   try {
     const res = await httpClient.get(
       `${BASE_URL}/chat/${userId}?relationType=${relationType}${searchKeyword}`,
+      {
+        headers: { "hide-toast": true },
+      },
     );
     return res.data;
   } catch (error) {

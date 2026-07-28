@@ -1,26 +1,26 @@
-import { EllipsisVerticalIcon } from "@heroicons/react/24/outline";
 import { twMerge } from "tailwind-merge";
-import avatarImg from "@/assets/avatar.png";
+import avatarImg from "@/assets/avatar.webp";
 import { useNavigate, useParams } from "@tanstack/react-router";
 import {
-  ButtonComp,
-  NewChatModal,
-  NewGroupChatModal,
-  SearchInput,
-} from "@/components";
-import {
-  Menu,
-  MenuHandler,
-  MenuItem,
-  MenuList,
-} from "@material-tailwind/react/components/Menu";
-import Spinner from "@material-tailwind/react/components/Spinner";
-import { useState } from "react";
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+import { lazy, useState } from "react";
 import { useAuthStore, useUserStore } from "@/zustand";
 import { useQuery } from "@tanstack/react-query";
 import { ChatAPI } from "@/api";
 import { Chat } from "@/utils/contracts";
 import { formatMessageTime } from "@/utils/helper";
+import { Button } from "../ui/button";
+import { EllipsisVerticalIcon } from "lucide-react";
+const NewGroupChatModal = lazy(
+  () => import("../NewGroupChatModal/NewGroupChatModal"),
+);
+const NewChatModal = lazy(() => import("../NewChatModal/NewChatModal"));
+const SearchInput = lazy(() => import("../SearchInput/SearchInput"));
 
 export default function ChatListing() {
   const { id } = useParams({ strict: false });
@@ -53,6 +53,7 @@ export default function ChatListing() {
   async function signOut() {
     await logout();
   }
+
   return (
     <>
       <div className="h-full flex flex-col py-2 border-r border-gray-50 dark:border-darkBg">
@@ -60,48 +61,43 @@ export default function ChatListing() {
           <h2 className="text-2xl font-semibold text-lightText dark:text-darkText">
             Chats
           </h2>
-          <Menu>
-            <MenuHandler>
-              <EllipsisVerticalIcon
-                width={25}
-                className="text-lightText dark:text-darkText cursor-pointer"
-              />
-            </MenuHandler>
-            <MenuList className="bg-lightBg dark:bg-darkBg border-gray-50 dark:border-darkPrimary">
-              <MenuItem
-                className="flex items-center gap-2"
-                onClick={() => setOpenNewChat(true)}
-              >
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button>
+                <EllipsisVerticalIcon
+                  width={25}
+                  className="text-lightText dark:text-darkText cursor-pointer"
+                />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="bg-lightBg dark:bg-darkBg border-gray-50 dark:border-darkPrimary">
+              <DropdownMenuItem onClick={() => setOpenNewChat(true)}>
                 New Chat
-              </MenuItem>
-              <MenuItem
-                className="flex items-center gap-2"
-                onClick={() => setOpenNewGroupChat(true)}
-              >
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setOpenNewGroupChat(true)}>
                 New Group
-              </MenuItem>
-              <hr className="my-2 border-blue-gray-50" />
-              <MenuItem className="flex items-center gap-2" onClick={signOut}>
-                Sign Out
-              </MenuItem>
-            </MenuList>
-          </Menu>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={signOut}>Sign Out</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
-        <div className="w-full max-w-sm min-w-[200px] px-4">
+
+        <div className="w-full max-w-sm min-w-50 px-4">
           <SearchInput />
         </div>
-        <div></div>
+
         <div className="flex-1 overflow-auto py-4 px-4 space-y-4">
           {fetchingChats ? (
             <div className="h-full flex justify-center items-center">
-              <Spinner color="blue" />
+              <div className="h-5 w-5 animate-spin rounded-full border-2 border-lightPrimary border-t-transparent" />
             </div>
           ) : chats?.length > 0 ? (
             chats?.map((chat: Chat) => (
               <div
                 key={chat?.id}
                 className={twMerge(
-                  `py-3 px-4 bg-lightBg dark:bg-darkBg shadow-sm rounded-md flex justify-between cursor-pointer duration-500 text-lightText dark:text-darkText ease-in-out hover:bg-lightPrimary dark:hover:bg-darkPrimary hover:text-white`,
+                  "py-3 px-4 bg-lightBg dark:bg-darkBg shadow-sm rounded-md flex justify-between cursor-pointer duration-500 text-lightText dark:text-darkText ease-in-out hover:bg-lightPrimary dark:hover:bg-darkPrimary hover:text-white",
                   id == chat?.id &&
                     "bg-lightPrimary dark:bg-darkPrimary text-white",
                 )}
@@ -134,23 +130,25 @@ export default function ChatListing() {
               <h2 className="text-lightText dark:text-darkText">
                 No Chats to Display!
               </h2>
-              <ButtonComp
-                label="Add New Chat"
-                className="w-fit"
-                onClick={() => setOpenNewChat(true)}
-              />
+              <Button className="w-fit" onClick={() => setOpenNewChat(true)}>
+                Add New Chat
+              </Button>
             </div>
           )}
         </div>
       </div>
-      <NewChatModal
-        openModal={openNewChat}
-        handleOpen={() => setOpenNewChat((prev) => !prev)}
-      />
-      <NewGroupChatModal
-        openModal={openNewGroupChat}
-        handleOpen={() => setOpenNewGroupChat((prev) => !prev)}
-      />
+      {openNewChat && (
+        <NewChatModal
+          openModal={openNewChat}
+          handleOpen={() => setOpenNewChat((prev) => !prev)}
+        />
+      )}
+      {openNewGroupChat && (
+        <NewGroupChatModal
+          openModal={openNewGroupChat}
+          handleOpen={() => setOpenNewGroupChat((prev) => !prev)}
+        />
+      )}
     </>
   );
 }

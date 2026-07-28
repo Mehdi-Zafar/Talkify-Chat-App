@@ -1,5 +1,3 @@
-import { boolean } from "zod";
-
 export enum Theme {
   LIGHT = "light",
   DARK = "dark",
