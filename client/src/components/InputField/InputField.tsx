@@ -33,7 +33,7 @@ export default function InputField({
           placeholder={placeholder}
           type={showPassword ? "text" : type}
           className={twMerge(
-            `block w-full rounded-md border border-gray-50 dark:border-darkPrimary px-4 py-2 bg-white dark:bg-darkBody text-lightText dark:text-darkText shadow-sm placeholder:text-gray-400 outline-none sm:text-sm sm:leading-6`,
+            `block w-full rounded-md border border-gray-50 dark:border-darkPrimary px-4 py-2 bg-white dark:bg-darkBody text-lightText dark:text-darkText shadow-sm placeholder:text-gray-400 outline-none sm:text-sm sm:leading-6 focus:ring-2 focus:ring-lightPrimary`,
             inputClass,
           )}
           {...register}
