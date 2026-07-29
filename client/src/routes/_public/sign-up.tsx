@@ -60,6 +60,7 @@ function SignUp() {
     getValues,
     trigger,
     reset,
+    control,
     formState: { errors },
   } = useForm({ mode: "onChange", resolver: zodResolver(FormSchema) });
   const [openModal, setOpenModal] = useState(false);
@@ -134,8 +135,7 @@ function SignUp() {
                 label="Phone Number"
                 name="phone_number"
                 placeholder="Enter Phone Number"
-                value={getValues("phone_number")}
-                register={{ ...register("phone_number") }}
+                control={control}
                 error={errors["phone_number"]}
               />
               <SelectField
@@ -144,8 +144,9 @@ function SignUp() {
                   { label: "Male", value: "male" },
                   { label: "Female", value: "female" },
                 ]}
+                name="gender"
                 placeholder="Select Gender"
-                register={{ ...register("gender") }}
+                control={control}
                 error={errors["gender"]}
               />
               <InputField
