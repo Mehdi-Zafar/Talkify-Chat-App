@@ -1,7 +1,8 @@
 // src/socket/index.ts
 import { Server, Socket } from "socket.io";
 import prisma from "../lib/prisma";
-import { Message, SocketEvent } from "../lib/models";
+import { SocketEvent } from "../lib/models";
+import { messages } from "@prisma/client";
 
 export const registerSocketHandlers = (io: Server) => {
   io.on(SocketEvent.CONNECT, (socket: Socket) => {
@@ -11,12 +12,12 @@ export const registerSocketHandlers = (io: Server) => {
       socket.join(chatId.toString());
     });
 
-    socket.on(SocketEvent.SEND_MSG, async (data: Message) => {
+    socket.on(SocketEvent.SEND_MSG, async (data: messages) => {
       try {
         await prisma.messages.create({
           data: {
             content: data.content,
-            sender_id: data.sender.id,
+            sender_id: data.sender_id,
             chat_id: data.chat_id,
           },
         });
