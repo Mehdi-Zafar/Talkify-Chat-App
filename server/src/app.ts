@@ -10,6 +10,7 @@ import messageRoutes from "./routes/messageRoutes";
 import authRoutes from "./routes/authRoutes";
 import otpRoutes from "./routes/otpRoutes";
 import errorHandler from "./middleware/errorHandler";
+import { apiLimiter } from "./middleware/rateLimiter";
 
 const app: Application = express();
 
@@ -20,6 +21,8 @@ export const corsOptions = {
   credentials: true,
 };
 
+app.set("trust proxy", 1);
+
 // ─── Middleware ───────────────────────────────────────────────────────────────
 app.use(cors(corsOptions));
 app.use(helmet());
@@ -27,6 +30,7 @@ app.use(morgan(env.NODE_ENV === "production" ? "combined" : "dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+app.use(apiLimiter);
 
 // ─── Routes ───────────────────────────────────────────────────────────────────
 app.use("/api/users", userRoutes);
