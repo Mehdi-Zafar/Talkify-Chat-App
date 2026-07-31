@@ -2,7 +2,7 @@ import { users } from "@prisma/client";
 import cloudinary from "../config/cloudinary";
 import { env } from "../config/env";
 import { PUBLIC_USER_FIELDS } from "../repositories/userRepository";
-import { PublicUser, Token, User } from "./models";
+import { PublicUser, Token } from "./models";
 import bcrypt from "bcryptjs";
 
 export const generateOtp = (length: number = 6): string => {
