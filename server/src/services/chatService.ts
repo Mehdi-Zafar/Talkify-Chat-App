@@ -3,7 +3,6 @@ import * as ChatRepository from "../repositories/chatRepository";
 import { CreateChatBody, UpdateChatBody } from "../types/requests";
 
 export const createChat = async (data: CreateChatBody, creatorId: number) => {
-  // Ensure creator is always a member
   const members = data.members.includes(creatorId)
     ? data.members
     : [...data.members, creatorId];
@@ -31,10 +30,13 @@ export const getChats = async (userId: number, page: number, limit: number) => {
 export const getChatById = async (chatId: number, userId: number) => {
   const chat = await ChatRepository.findWithMessages(chatId);
   if (!chat) throw new AppError(404, "Chat not found");
-  if (!chat.members.includes(userId))
+
+  // members is now chat_members[] — extract user_ids for the membership check
+  const memberIds = chat.members.map((m) => m.user_id);
+  if (!memberIds.includes(userId))
     throw new AppError(403, "You are not a member of this chat");
 
-  const members = await ChatRepository.findMembersByIds(chat.members);
+  const members = await ChatRepository.findMembersByIds(memberIds);
 
   return {
     id: chat.id,
@@ -59,7 +61,11 @@ export const getChatsByUserId = async (userId: number, requesterId: number) => {
   if (chats.length === 0) return [];
 
   const chatIds = chats.map((c) => c.id);
-  const uniqueMemberIds = [...new Set(chats.flatMap((c) => c.members))];
+
+  // members is chat_members[] — extract unique user_ids across all chats
+  const uniqueMemberIds = [
+    ...new Set(chats.flatMap((c) => c.members.map((m) => m.user_id))),
+  ];
 
   const [memberDetails, lastMessages] = await Promise.all([
     ChatRepository.findMemberDetailsByIds(uniqueMemberIds),
@@ -70,14 +76,14 @@ export const getChatsByUserId = async (userId: number, requesterId: number) => {
   const lastMessageMap = new Map(lastMessages.map((m) => [m.chat_id, m]));
 
   return chats.map((chat) => {
+    // Extract IDs from junction rows, then look up full details from map
     const populatedMembers = chat.members
-      .map((id) => membersMap.get(id))
+      .map((m) => membersMap.get(m.user_id))
       .filter(
         (m): m is { id: number; user_name: string; image: string } =>
           m !== undefined,
       );
 
-    // For DMs with no name, derive it from the other participant
     let name = chat.name;
     if (!chat.isGroupChat && !name) {
       const other = populatedMembers.find((m) => m.id !== userId);

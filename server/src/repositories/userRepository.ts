@@ -6,9 +6,6 @@ import {
   ChatUsersQuery,
 } from "../types/requests";
 
-// Single select definition — every query that returns a user uses this.
-// Ensures password is never accidentally included in a response.
-// When caching is added, cache keys can be derived from this shape.
 export const PUBLIC_USER_FIELDS = {
   id: true,
   user_name: true,
@@ -24,7 +21,6 @@ export const findById = (id: number) =>
     select: PUBLIC_USER_FIELDS,
   });
 
-// Includes password — only for auth checks, never sent to client
 export const findByIdWithPassword = (id: number) =>
   prisma.users.findUnique({ where: { id } });
 
@@ -77,9 +73,6 @@ export const updateImage = (id: number, imageUrl: string) =>
 export const deleteById = (id: number) =>
   prisma.users.delete({ where: { id } });
 
-// Finds users that share at least one chat with userId (contacts),
-// or all users excluding userId (non-contacts).
-// Returns null if relationType is unrecognised — service converts to AppError.
 export const findByRelation = (
   userId: number,
   query: ChatUsersQuery,
@@ -91,13 +84,13 @@ export const findByRelation = (
     : {};
 
   if (relationType === UserRelationType.CONTACT) {
-    // Users who share at least one chat with the requesting user
     return prisma.users.findMany({
       where: {
         id: { not: userId },
-        messages: {
+        // User shares at least one chat with userId via chat_members
+        chats: {
           some: {
-            chat: { members: { has: userId } },
+            chat: { members: { some: { user_id: userId } } },
           },
         },
         ...nameFilter,
@@ -111,9 +104,9 @@ export const findByRelation = (
       where: {
         id: { not: userId },
         NOT: {
-          messages: {
+          chats: {
             some: {
-              chat: { members: { has: userId } },
+              chat: { members: { some: { user_id: userId } } },
             },
           },
         },

@@ -4,9 +4,6 @@ import { CreateChatBody, UpdateChatBody } from "../types/requests";
 export const findById = (id: number) =>
   prisma.chats.findUnique({ where: { id } });
 
-// Includes messages + sender info for the getChatById response.
-// Also selects `members` on the chat so the service can do the
-// membership check on the already-fetched object — no second round trip.
 export const findWithMessages = (id: number) =>
   prisma.chats.findUnique({
     where: { id },
@@ -18,16 +15,27 @@ export const findWithMessages = (id: number) =>
           user: { select: { id: true, user_name: true, image: true } },
         },
       },
+      // Include members relation so service can read member list
+      members: {
+        select: { user_id: true },
+      },
     },
+  });
+
+// Dedicated membership check — single indexed lookup on composite PK
+// Cheaper than fetching all members just to call .includes()
+export const isMember = (chatId: number, userId: number) =>
+  prisma.chat_members.findUnique({
+    where: { chat_id_user_id: { chat_id: chatId, user_id: userId } },
   });
 
 export const findManyByUserId = (userId: number) =>
   prisma.chats.findMany({
-    where: { members: { has: userId } },
+    where: { members: { some: { user_id: userId } } },
     orderBy: { updatedAt: "desc" },
+    include: { members: { select: { user_id: true } } },
   });
 
-// Paginated list of chats — returns [rows, total] for pagination metadata
 export const findManyPaginated = (
   userId: number,
   page: number,
@@ -35,29 +43,26 @@ export const findManyPaginated = (
 ) =>
   Promise.all([
     prisma.chats.findMany({
-      where: { members: { has: userId } },
+      where: { members: { some: { user_id: userId } } },
       orderBy: { updatedAt: "desc" },
       skip: (page - 1) * limit,
       take: limit,
     }),
-    prisma.chats.count({ where: { members: { has: userId } } }),
+    prisma.chats.count({ where: { members: { some: { user_id: userId } } } }),
   ]);
 
-// Fetch full user records for a set of member IDs
 export const findMembersByIds = (memberIds: number[]) =>
   prisma.users.findMany({
     where: { id: { in: memberIds } },
     select: { id: true, user_name: true, email: true, image: true },
   });
 
-// Lightweight member details for the chat list (no email needed)
 export const findMemberDetailsByIds = (memberIds: number[]) =>
   prisma.users.findMany({
     where: { id: { in: memberIds } },
     select: { id: true, user_name: true, image: true },
   });
 
-// One last message per chat — used to populate the chat list preview
 export const findLastMessagesByChatIds = (chatIds: number[]) =>
   prisma.messages.findMany({
     where: { chat_id: { in: chatIds } },
@@ -70,9 +75,12 @@ export const insert = (data: CreateChatBody, creatorId: number) =>
   prisma.chats.create({
     data: {
       name: data.name ?? "",
-      members: data.members,
       creator_id: creatorId,
       isGroupChat: data.isGroupChat,
+      // members is now a relation — nested create into chat_members
+      members: {
+        create: data.members.map((userId) => ({ user_id: userId })),
+      },
     },
   });
 
@@ -81,13 +89,20 @@ export const updateById = (id: number, data: UpdateChatBody) =>
     where: { id },
     data: {
       ...(data.name !== undefined && { name: data.name }),
-      ...(data.members !== undefined && { members: data.members }),
+      // members update: replace all existing members
+      ...(data.members !== undefined && {
+        members: {
+          deleteMany: {},
+          create: data.members.map((userId) => ({ user_id: userId })),
+        },
+      }),
     },
   });
 
-// Transaction: delete messages first (FK), then the chat
 export const deleteById = (id: number) =>
   prisma.$transaction([
     prisma.messages.deleteMany({ where: { chat_id: id } }),
+    // chat_members rows are deleted before chats due to FK
+    prisma.chat_members.deleteMany({ where: { chat_id: id } }),
     prisma.chats.delete({ where: { id } }),
   ]);
