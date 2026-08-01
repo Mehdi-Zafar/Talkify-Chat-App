@@ -56,8 +56,36 @@ export const getChatByUserId = async (
 ): Promise<void> => {
   try {
     const userId = parseId(req.params.id);
-    const chats = await ChatService.getChatsByUserId(userId, req.user!.id);
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 20;
+    const chats = await ChatService.getChatsByUserId(
+      userId,
+      req.user!.id,
+      page,
+      limit,
+    );
     res.status(200).json(chats);
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const getChatMessages = async (
+  req: Request<IdParam>,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const chatId = parseId(req.params.id);
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 30;
+    const result = await ChatService.getChatMessages(
+      chatId,
+      req.user!.id,
+      page,
+      limit,
+    );
+    res.status(200).json(result);
   } catch (err) {
     next(err);
   }
@@ -86,6 +114,20 @@ export const deleteChat = async (
     const chatId = parseId(req.params.id);
     await ChatService.deleteChat(chatId, req.user!.id);
     res.status(204).send();
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const getChatMeta = async (
+  req: Request<IdParam>,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const chatId = parseId(req.params.id);
+    const chat = await ChatService.getChatMeta(chatId, req.user!.id);
+    res.status(200).json(chat);
   } catch (err) {
     next(err);
   }
