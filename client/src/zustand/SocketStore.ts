@@ -1,8 +1,9 @@
-// stores/socketStore.ts
 import { io, Socket } from "socket.io-client";
 import { create } from "zustand";
 import useAuthStore from "./AuthStore";
-import { SocketEvent } from "@/utils/contracts";
+import { Message, SocketEvent } from "@/utils/contracts";
+import useChatStore from "./ChatStore";
+import useUserStore from "./UserStore";
 
 type SocketState = {
   socket: Socket | null;
@@ -13,7 +14,6 @@ type SocketState = {
   emit: (event: string, ...args: any[]) => void;
   on: (event: string, callback: (...args: any[]) => void) => void;
   off: (event: string, callback?: (...args: any[]) => void) => void;
-  joinChat: (chatId: number) => void;
 };
 
 const useSocketStore = create<SocketState>((set, get) => ({
@@ -22,7 +22,6 @@ const useSocketStore = create<SocketState>((set, get) => ({
   error: null,
 
   connect: () => {
-    // Disconnect existing socket if any
     get().disconnect();
     const url = "http://localhost:3000";
     const authToken = useAuthStore.getState().accessToken;
@@ -46,6 +45,26 @@ const useSocketStore = create<SocketState>((set, get) => ({
 
       newSocket.on(SocketEvent.CONNECT_ERROR, (err) => {
         set({ error: new Error(`Connection error: ${err.message}`) });
+      });
+
+      newSocket.on(SocketEvent.RECEIVE_MSG, (message: Message) => {
+        const currentUserId = useUserStore.getState().user?.id;
+        useChatStore.getState().updateLastMessage(message, currentUserId);
+      });
+
+      newSocket.on("connect_error", async (err) => {
+        set({ error: new Error(`Connection error: ${err.message}`) });
+
+        if (err.message === "TOKEN_EXPIRED") {
+          try {
+            await useAuthStore.getState().refreshAccessToken();
+            const newToken = useAuthStore.getState().accessToken;
+            newSocket.auth = { token: newToken };
+            newSocket.connect();
+          } catch {
+            useAuthStore.getState().logout();
+          }
+        }
       });
 
       set({ socket: newSocket });
@@ -84,11 +103,6 @@ const useSocketStore = create<SocketState>((set, get) => ({
     } else {
       socket?.off(event);
     }
-  },
-
-  joinChat: (chatId: number) => {
-    const { socket } = get();
-    socket?.emit(SocketEvent.JOIN_CHAT, chatId);
   },
 }));
 
