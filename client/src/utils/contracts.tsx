@@ -3,7 +3,6 @@ export enum Theme {
   DARK = "dark",
 }
 
-// models/User.ts
 export class User {
   id: number;
   user_name: string;
@@ -84,7 +83,6 @@ export enum UserRelationType {
 export enum SocketEvent {
   CONNECT = "connect",
   DISCONNECT = "disconnect",
-  JOIN_CHAT = "joinChat",
   SEND_MSG = "sendMsg",
   RECEIVE_MSG = "receiveMsg",
   CONNECT_ERROR = "connectError",

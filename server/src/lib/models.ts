@@ -19,7 +19,6 @@ export enum UserRelationType {
 export enum SocketEvent {
   CONNECT = "connect",
   DISCONNECT = "disconnect",
-  JOIN_CHAT = "joinChat",
   SEND_MSG = "sendMsg",
   RECEIVE_MSG = "receiveMsg",
   CONNECT_ERROR = "connectError",
