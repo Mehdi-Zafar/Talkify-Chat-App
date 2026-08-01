@@ -6,6 +6,8 @@ import {
   getChatByUserId,
   updateChat,
   deleteChat,
+  getChatMessages,
+  getChatMeta,
 } from "../controllers/chatController";
 import {
   validateBody,
@@ -27,7 +29,8 @@ router.use(authenticateUser);
 router.post("/", validateBody(createChatSchema), createChat);
 router.get("/", validateQuery(paginationSchema), getChats);
 router.get("/user/:id", validateParams(idParamSchema), getChatByUserId);
-router.get("/:id", validateParams(idParamSchema), getChatById);
+router.get("/:id/messages", validateParams(idParamSchema), getChatMessages);
+router.get("/:id/meta", validateParams(idParamSchema), getChatMeta);
 router.put(
   "/:id",
   validateParams(idParamSchema),

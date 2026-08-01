@@ -1,15 +1,9 @@
-// src/middleware/authenticateUser.ts
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
-import { env } from "../config/env";
-
-interface jwtPayload {
-  id: number;
-  email: string;
-}
+import { verifyAccessToken, JwtPayload } from "../lib/jwt";
 
 export interface AuthorizedRequest extends Request {
-  user?: jwtPayload;
+  user?: JwtPayload;
 }
 
 const authenticateUser = (
@@ -19,7 +13,6 @@ const authenticateUser = (
 ): void => {
   try {
     const authHeader = req.headers.authorization;
-
     if (!authHeader?.startsWith("Bearer ")) {
       res.status(401).json({
         success: false,
@@ -29,20 +22,9 @@ const authenticateUser = (
     }
 
     const token = authHeader.split(" ")[1];
-    const secretKey = env.JWT_ACCESS_SECRET;
-
-    const decoded = jwt.verify(token, secretKey) as {
-      id: number;
-      email: string;
-    };
-
-    // Fixed: actually attach decoded user to request
-    // Controllers can now access req.user.id safely
-    req.user = { id: decoded.id, email: decoded.email };
-
+    req.user = verifyAccessToken(token);
     next();
   } catch (error) {
-    // Distinguish expired vs invalid — client knows whether to refresh or re-login
     if (error instanceof jwt.TokenExpiredError) {
       res.status(401).json({
         success: false,
@@ -51,7 +33,6 @@ const authenticateUser = (
       });
       return;
     }
-
     res.status(401).json({
       success: false,
       message: "Invalid token",

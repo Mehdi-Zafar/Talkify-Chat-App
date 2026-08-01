@@ -7,11 +7,13 @@ export const createMessage = async (
   data: CreateMessageBody,
   senderId: number,
 ) => {
-  // findById on the chat (not message) — lightweight check, no messages included
   const chat = await ChatRepository.findById(data.chat_id);
   if (!chat) throw new AppError(404, "Chat not found");
-  if (!chat.members.includes(senderId))
-    throw new AppError(403, "You are not a member of this chat");
+
+  // Use dedicated isMember lookup — no need to fetch all members
+  const membership = await ChatRepository.isMember(data.chat_id, senderId);
+  if (!membership) throw new AppError(403, "You are not a member of this chat");
+
   return MessageRepository.insert(data, senderId);
 };
 
@@ -23,8 +25,9 @@ export const getMessages = async (
 ) => {
   const chat = await ChatRepository.findById(chatId);
   if (!chat) throw new AppError(404, "Chat not found");
-  if (!chat.members.includes(userId))
-    throw new AppError(403, "You are not a member of this chat");
+
+  const membership = await ChatRepository.isMember(chatId, userId);
+  if (!membership) throw new AppError(403, "You are not a member of this chat");
 
   const clampedPage = Math.max(1, page);
   const clampedLimit = Math.min(100, Math.max(1, limit));
@@ -44,11 +47,13 @@ export const getMessages = async (
 };
 
 export const getMessageById = async (id: number, userId: number) => {
-  // findById includes chat.members — no second DB call needed
   const message = await MessageRepository.findById(id);
   if (!message) throw new AppError(404, "Message not found");
-  if (!message.chat.members.includes(userId))
-    throw new AppError(403, "Forbidden");
+
+  // Use isMember instead of checking message.chat.members array
+  const membership = await ChatRepository.isMember(message.chat_id, userId);
+  if (!membership) throw new AppError(403, "Forbidden");
+
   return message;
 };
 

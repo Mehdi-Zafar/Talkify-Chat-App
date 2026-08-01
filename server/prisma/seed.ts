@@ -1,11 +1,11 @@
 import { PrismaClient } from "@prisma/client";
-import bcrypt from "bcryptjs";
 import { hashPassword } from "../src/lib/utils";
 
 const prisma = new PrismaClient();
 
 async function main() {
   const hashedPassword = await hashPassword("Password@123");
+
   // Seed users
   const user1 = await prisma.users.create({
     data: {
@@ -13,7 +13,7 @@ async function main() {
       email: "john.doe@sharklasers.com",
       phone_number: "1234567890",
       gender: "Male",
-      password: hashedPassword, // Replace with hashed password
+      password: hashedPassword,
     },
   });
 
@@ -23,7 +23,7 @@ async function main() {
       email: "jane.doe@sharklasers.com",
       phone_number: "0987654321",
       gender: "Female",
-      password: hashedPassword, // Replace with hashed password
+      password: hashedPassword,
     },
   });
 
@@ -33,7 +33,7 @@ async function main() {
       email: "alice.smith@sharklasers.com",
       phone_number: "1112223333",
       gender: "Female",
-      password: hashedPassword, // Replace with hashed password
+      password: hashedPassword,
     },
   });
 
@@ -43,30 +43,34 @@ async function main() {
       email: "bob.brown@sharklasers.com",
       phone_number: "4445556666",
       gender: "Male",
-      password: hashedPassword, // Replace with hashed password
+      password: hashedPassword,
     },
   });
 
-  // Seed chats
+  // Seed chats — members now use nested create into chat_members junction table
   const generalChat = await prisma.chats.create({
     data: {
       name: "General Chat",
-      members: [user1.id, user2.id],
       creator_id: user1.id,
       isGroupChat: true,
+      members: {
+        create: [{ user_id: user1.id }, { user_id: user2.id }],
+      },
     },
   });
 
   const privateChat = await prisma.chats.create({
     data: {
       name: "Private Chat",
-      members: [user3.id, user4.id],
       creator_id: user3.id,
       isGroupChat: false,
+      members: {
+        create: [{ user_id: user3.id }, { user_id: user4.id }],
+      },
     },
   });
 
-  // Seed messages
+  // Seed messages — no changes needed here
   await prisma.messages.createMany({
     data: [
       {
@@ -95,6 +99,8 @@ async function main() {
       },
     ],
   });
+
+  console.log("Seed complete");
 }
 
 main()

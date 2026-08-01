@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -14,44 +8,59 @@ datasource db {
 }
 
 model users {
-  id                       Int        @id @default(autoincrement())
-  user_name                String     @db.VarChar(255)
-  email                    String     @unique @db.VarChar(255)
-  phone_number             String     @db.VarChar(50)
-  gender                   String     @db.VarChar(50)
-  password                 String     @db.VarChar(255)
-  verification_code        String     @default("") @db.VarChar(50)
-  verification_code_expiry Int        @default(0)
-  image                    String     @default("") @db.VarChar(255)
+  id                       Int           @id @default(autoincrement())
+  user_name                String        @db.VarChar(255)
+  email                    String        @unique @db.VarChar(255)
+  phone_number             String        @db.VarChar(50)
+  gender                   String        @db.VarChar(50)
+  password                 String        @db.VarChar(255)
+  image                    String        @default("") @db.VarChar(255)
   messages                 messages[]
+  chats                    chat_members[]
 }
 
 model chats {
-  id          Int        @id @default(autoincrement())
-  name        String     @db.VarChar(255)
-  members     Int[]
+  id          Int            @id @default(autoincrement())
+  name        String         @db.VarChar(255)
   creator_id  Int
   isGroupChat Boolean
   messages    messages[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime   @updatedAt @default(now())
+  members     chat_members[]
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @default(now()) @updatedAt
+
+  @@index([updatedAt(sort: Desc)])
+}
+
+// Junction table replacing members Int[] array column
+model chat_members {
+  chat      chats    @relation(fields: [chat_id], references: [id])
+  chat_id   Int
+  user      users    @relation(fields: [user_id], references: [id])
+  user_id   Int
+  joinedAt  DateTime @default(now())
+
+  @@id([chat_id, user_id])           // composite PK — one row per member per chat
+  @@index([user_id])                 // fetch all chats for a user efficiently
 }
 
 model messages {
   id          Int      @id @default(autoincrement())
-  content     String   @db.VarChar(255)
-  attachments String[] @db.VarChar(255) @default([])
+  content     String   @db.Text          // was VarChar(255) — too short for chat messages
+  attachments String[] @default([]) @db.VarChar(255)
   user        users    @relation(fields: [sender_id], references: [id])
   sender_id   Int
   chat        chats    @relation(fields: [chat_id], references: [id])
   chat_id     Int
   createdAt   DateTime @default(now())
+
+  @@index([chat_id, createdAt(sort: Desc)])  // composite: filter by chat + sort by time in one scan
+  @@index([sender_id])                        // for fetching messages sent by a user
 }
 
-
 model userOtp {
-  id                   Int                    @id @default(autoincrement())
-  email                String                 @unique @db.VarChar(255)
-  otp                  String                 @db.VarChar(50) @default("")
-  otp_expiry           Int                    @default(0)
+  id         Int    @id @default(autoincrement())
+  email      String @unique @db.VarChar(255)
+  otp        String @default("") @db.VarChar(50)
+  otp_expiry Int    @default(0)
 }

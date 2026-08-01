@@ -12,15 +12,22 @@ import {
   registerSchema,
   resetPasswordSchema,
 } from "../validators/authValidators";
+import { authLimiter, refreshLimiter } from "../middleware/rateLimiter";
 
 const router = Router();
 
-router.post("/login", validateBody(loginSchema), loginUser);
-router.post("/register", validateBody(registerSchema), registerUser);
-router.post("/logout", logoutUser);
-router.post("/refresh", refreshAccessToken);
+router.post("/login", authLimiter, validateBody(loginSchema), loginUser);
+router.post(
+  "/register",
+  authLimiter,
+  validateBody(registerSchema),
+  registerUser,
+);
+router.post("/logout", authLimiter, logoutUser);
+router.post("/refresh", refreshLimiter, refreshAccessToken);
 router.post(
   "/reset-password",
+  authLimiter,
   validateBody(resetPasswordSchema),
   resetUserPassword,
 );

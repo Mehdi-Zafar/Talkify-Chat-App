@@ -16,7 +16,7 @@ export const findManyByChat = (chatId: number, page: number, limit: number) =>
   Promise.all([
     prisma.messages.findMany({
       where: { chat_id: chatId },
-      orderBy: { createdAt: "asc" },
+      orderBy: { createdAt: "desc" },
       skip: (page - 1) * limit,
       take: limit,
       include: {
@@ -27,15 +27,23 @@ export const findManyByChat = (chatId: number, page: number, limit: number) =>
   ]);
 
 export const insert = (data: CreateMessageBody, senderId: number) =>
-  prisma.messages.create({
-    data: {
-      content: data.content,
-      chat_id: data.chat_id,
-      sender_id: senderId,
-    },
-    include: {
-      user: { select: { id: true, user_name: true, image: true } },
-    },
+  prisma.$transaction(async (tx) => {
+    const message = await tx.messages.create({
+      data: {
+        content: data.content,
+        attachments: data.attachments ?? [],
+        sender_id: senderId,
+        chat_id: data.chat_id,
+      },
+    });
+
+    // Bump updatedAt so chat list order reflects actual last activity
+    await tx.chats.update({
+      where: { id: data.chat_id },
+      data: { updatedAt: message.createdAt },
+    });
+
+    return message;
   });
 
 export const updateContent = (id: number, content: string) =>
