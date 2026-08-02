@@ -31,6 +31,17 @@ export class Chat {
   } | null;
 }
 
+export class CreateGroupChatRequest {
+  name: string = "";
+  isGroupChat: boolean = true;
+  members: number[] = [];
+}
+
+export class CreateChatRequest {
+  member_id: number = 0;
+  isGroupChat: boolean = false;
+}
+
 export class Message {
   id: number;
   content: string;
