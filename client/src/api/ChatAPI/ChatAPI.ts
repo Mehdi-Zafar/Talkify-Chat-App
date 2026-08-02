@@ -14,7 +14,6 @@ export const createGroupChat = async (chat: Chat) => {
   }
 };
 
-// Paginated chat list — called by useInfiniteQuery in the chat list component
 export const getChatsByUserId = async (
   id: number,
   page: number,
@@ -31,8 +30,6 @@ export const getChatsByUserId = async (
   }
 };
 
-// Lightweight metadata fetch — only called when store doesn't have this chat
-// (refresh case or chat outside currently loaded list pages)
 export const getChatMeta = async (id: number) => {
   try {
     const res = await httpClient.get(`${BASE_URL}/${id}/meta`, {
@@ -44,7 +41,6 @@ export const getChatMeta = async (id: number) => {
   }
 };
 
-// Paginated messages for a specific chat
 export const getChatMessages = async (
   id: number,
   page: number,
@@ -56,6 +52,17 @@ export const getChatMessages = async (
       headers: { "hide-toast": true },
     });
     return res.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Resets last_read_at in DB for this user+chat — clears persistent unread count
+export const markChatAsRead = async (id: number) => {
+  try {
+    await httpClient.patch(`${BASE_URL}/${id}/read`, null, {
+      headers: { "hide-toast": true },
+    });
   } catch (error) {
     throw error;
   }
