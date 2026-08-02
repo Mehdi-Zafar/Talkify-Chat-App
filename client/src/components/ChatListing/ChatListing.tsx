@@ -33,7 +33,6 @@ export default function ChatListing() {
 
   const logout = useAuthStore((state) => state.logout);
   const user = useUserStore((state) => state.user);
-  const queryClient = useQueryClient();
 
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isFetching } =
     useInfiniteQuery({
@@ -65,7 +64,6 @@ export default function ChatListing() {
 
   async function signOut() {
     await logout();
-    queryClient.clear();
   }
 
   return (
