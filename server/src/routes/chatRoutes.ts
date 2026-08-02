@@ -8,6 +8,7 @@ import {
   deleteChat,
   getChatMessages,
   getChatMeta,
+  markChatAsRead,
 } from "../controllers/chatController";
 import {
   validateBody,
@@ -31,6 +32,7 @@ router.get("/", validateQuery(paginationSchema), getChats);
 router.get("/user/:id", validateParams(idParamSchema), getChatByUserId);
 router.get("/:id/messages", validateParams(idParamSchema), getChatMessages);
 router.get("/:id/meta", validateParams(idParamSchema), getChatMeta);
+router.patch("/:id/read", validateParams(idParamSchema), markChatAsRead);
 router.put(
   "/:id",
   validateParams(idParamSchema),

@@ -39,6 +39,7 @@ model chat_members {
   user      users    @relation(fields: [user_id], references: [id])
   user_id   Int
   joinedAt  DateTime @default(now())
+  last_read_at DateTime @default(now())
 
   @@id([chat_id, user_id])           // composite PK — one row per member per chat
   @@index([user_id])                 // fetch all chats for a user efficiently

@@ -7,12 +7,17 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import { ChatAPI } from "@/api";
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useSocketStore, useUserStore, useChatStore } from "@/zustand";
 import { Message, SocketEvent } from "@/utils/contracts";
 import { formatMessageTime, groupMessagesByDate } from "@/utils/helper";
+import {
+  updateLastMessageInCache,
+  clearUnreadInCache,
+  getChatFromCache,
+} from "@/lib/queryClient";
 import { EllipsisVerticalIcon } from "lucide-react";
 
 const LIMIT = 30;
@@ -29,6 +34,9 @@ function ChatDisplay() {
   const socketEmit = useSocketStore((state) => state.emit);
   const socket = useSocketStore((state) => state.socket);
 
+  // Read chat metadata directly from TanStack cache — no Zustand needed
+  const chatMeta = user ? getChatFromCache(user.id, chatId) : undefined;
+
   const [newMsg, setNewMsg] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
   const [activeDateLabel, setActiveDateLabel] = useState("");
@@ -38,7 +46,6 @@ function ChatDisplay() {
   const containerRef = useRef<HTMLDivElement>(null);
   const prevScrollHeightRef = useRef<number>(0);
   const isFirstLoad = useRef(true);
-  const chatMeta = useChatStore((state) => state.chatsMap.get(chatId));
 
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isFetching } =
     useInfiniteQuery({
@@ -49,16 +56,7 @@ function ChatDisplay() {
         lastPage.page < lastPage.totalPages ? lastPage.page + 1 : undefined,
       initialPageParam: 1,
       enabled: !!chatId && !isNaN(chatId),
-      refetchOnWindowFocus: false,
-      staleTime: Infinity,
     });
-
-  // const { data: fetchedMeta } = useQuery({
-  //   queryKey: ["chatMeta", chatId],
-  //   queryFn: () => ChatAPI.getChatMeta(chatId),
-  //   enablechat && !!chatId,
-  //   staleTime: Infinity,
-  // });
 
   // Seed local messages from the first page
   useEffect(() => {
@@ -66,18 +64,29 @@ function ChatDisplay() {
     const firstPage = data.pages[0];
     const initialMessages = [...firstPage.items].reverse();
     setMessages(initialMessages);
+    isFirstLoad.current = true;
   }, [data?.pages[0]]);
 
-  // Scroll to bottom only on first load
+  // Scroll to bottom only on first load of this chat
   useEffect(() => {
     if (!messages.length || !isFirstLoad.current) return;
     messagesEndRef.current?.scrollIntoView({ behavior: "instant" });
     isFirstLoad.current = false;
   }, [messages.length]);
 
+  // Mark chat as read and track active chat
   useEffect(() => {
-    useChatStore.getState().clearUnread(chatId);
-  }, [chatId]);
+    if (!chatId || !user) return;
+
+    useChatStore.getState().setActiveChatId(chatId);
+    ChatAPI.markChatAsRead(chatId);
+    clearUnreadInCache(user.id, chatId);
+    setUnreadCount(0);
+
+    return () => {
+      useChatStore.getState().setActiveChatId(null);
+    };
+  }, [chatId, user?.id]);
 
   // Prepend older messages when a new page loads — preserve scroll position
   useEffect(() => {
@@ -105,6 +114,7 @@ function ChatDisplay() {
     const container = containerRef.current;
     if (!container) return;
 
+    // Sticky date label tracking
     const markers = container.querySelectorAll<HTMLElement>("[data-date]");
     let current = "";
     markers.forEach((marker) => {
@@ -117,12 +127,15 @@ function ChatDisplay() {
     const isNearBottom =
       container.scrollHeight - container.scrollTop - container.clientHeight <
       150;
-    if (isNearBottom) setUnreadCount(0);
+
+    if (isNearBottom && unreadCount > 0) {
+      setUnreadCount(0);
+    }
 
     if (container.scrollTop < 100 && hasNextPage && !isFetchingNextPage) {
       fetchNextPage();
     }
-  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage, unreadCount]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -131,59 +144,42 @@ function ChatDisplay() {
     return () => container.removeEventListener("scroll", handleScroll);
   }, [handleScroll]);
 
-  // Socket: receive new message — only append if it belongs to the open chat.
-  // With user-based delivery, messages from all chats arrive on this one handler.
+  // Socket: receive new message
   useEffect(() => {
     if (!socket) return;
+
     const handleNewMessage = (message: Message) => {
       debugger;
-      if (message.chat_id !== chatId) {
-        // Message is for a different chat — always increment
-        useChatStore.getState().incrementUnread(message.chat_id);
-        return;
-      }
+      if (message.chat_id !== chatId) return;
 
       setMessages((prev) => [...prev, message]);
 
-      const container = containerRef.current;
-      if (!container) return;
-      const isNearBottom =
-        container.scrollHeight - container.scrollTop - container.clientHeight <
+      requestAnimationFrame(() => {
+        const container = containerRef.current;
+        if (!container) return;
+
+        const isNearBottom =
+          container.scrollHeight - container.scrollTop - container.clientHeight;
         150;
 
-      if (isNearBottom) {
-        // User is at the bottom — no unread indicator needed
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-        useChatStore.getState().clearUnread(chatId);
-      } else {
-        // User has scrolled up — show in-chat unread indicator
-        setUnreadCount((prev) => prev + 1);
-        useChatStore.getState().incrementUnread(chatId);
-      }
+        if (isNearBottom) {
+          container.scrollTop = container.scrollHeight;
+        } else {
+          setUnreadCount((prev) => prev + 1);
+        }
+      });
     };
+
     socket.on(SocketEvent.RECEIVE_MSG, handleNewMessage);
     return () => {
       socket.off(SocketEvent.RECEIVE_MSG, handleNewMessage);
     };
   }, [socket, chatId]);
 
-  // Scroll to bottom when a new message arrives
-  useEffect(() => {
-    if (!messages.length || isFetchingNextPage) return;
-    const container = containerRef.current;
-    if (!container) return;
-    const isNearBottom =
-      container.scrollHeight - container.scrollTop - container.clientHeight;
-    150;
-    if (isNearBottom || isFirstLoad.current) {
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    }
-  }, [messages.length]);
-
   function formulateMessage() {
     const message = new Message();
     message.chat_id = chatId;
-    message.sender = { ...message.sender, id: user.id, image: user.image };
+    message.sender = { ...message.sender, id: user!.id, image: user!.image };
     message.content = newMsg;
     message.createdAt = new Date().toISOString();
     return message;
@@ -193,7 +189,7 @@ function ChatDisplay() {
     if (!chatId || !user || !newMsg.trim()) return;
     const message = formulateMessage();
     setMessages((prev) => [...prev, message]);
-    useChatStore.getState().updateLastMessage(message, user.id);
+    updateLastMessageInCache(user.id, message, user.id);
     socketEmit(SocketEvent.SEND_MSG, message);
     setNewMsg("");
     setUnreadCount(0);
@@ -340,6 +336,7 @@ function ChatDisplay() {
               )}
             </div>
           ))}
+
           {unreadCount > 0 && (
             <button
               onClick={() => {
@@ -351,6 +348,7 @@ function ChatDisplay() {
               {unreadCount} new {unreadCount === 1 ? "message" : "messages"} ↓
             </button>
           )}
+
           <div ref={messagesEndRef} />
         </div>
 

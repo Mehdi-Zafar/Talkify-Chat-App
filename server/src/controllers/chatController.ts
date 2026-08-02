@@ -132,3 +132,17 @@ export const getChatMeta = async (
     next(err);
   }
 };
+
+export const markChatAsRead = async (
+  req: Request<IdParam>,
+  res: Response,
+  next: NextFunction,
+): Promise<void> => {
+  try {
+    const chatId = parseId(req.params.id);
+    await ChatService.markAsRead(chatId, req.user!.id);
+    res.status(204).send();
+  } catch (err) {
+    next(err);
+  }
+};

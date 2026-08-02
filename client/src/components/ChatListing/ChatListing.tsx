@@ -8,11 +8,11 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { lazy, useEffect, useState } from "react";
-import { useAuthStore, useUserStore, useChatStore } from "@/zustand";
+import { lazy, useState } from "react";
+import { useAuthStore, useUserStore } from "@/zustand";
 import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { ChatAPI } from "@/api";
-import { ChatMeta } from "@/zustand/ChatStore";
+import { ChatMeta } from "@/utils/contracts";
 import { formatMessageTime } from "@/utils/helper";
 import { Button } from "../ui/button";
 import { EllipsisVerticalIcon } from "lucide-react";
@@ -33,9 +33,6 @@ export default function ChatListing() {
 
   const logout = useAuthStore((state) => state.logout);
   const user = useUserStore((state) => state.user);
-  const chatsMap = useChatStore((state) => state.chatsMap);
-  const addChats = useChatStore((state) => state.addChats);
-  const unreadCounts = useChatStore((state) => state.unreadCounts);
   const queryClient = useQueryClient();
 
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isFetching } =
@@ -47,20 +44,9 @@ export default function ChatListing() {
         lastPage.page < lastPage.totalPages ? lastPage.page + 1 : undefined,
       initialPageParam: 1,
       enabled: !!user?.id,
-      refetchOnWindowFocus: false,
-      staleTime: Infinity,
     });
 
-  // Populate store whenever a new page loads
-  useEffect(() => {
-    if (!data?.pages) return;
-    const latestPage = data.pages[data.pages.length - 1];
-    addChats(latestPage.items);
-  }, [data?.pages.length]);
-
-  // Render from the store — updateChat writes here directly,
-  // so last message and sort order update instantly on socket receive.
-  const allChats = Array.from(chatsMap.values()).sort(
+  const allChats = (data?.pages.flatMap((page) => page.items) ?? []).sort(
     (a: ChatMeta, b: ChatMeta) =>
       new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
   );
@@ -136,47 +122,43 @@ export default function ChatListing() {
             </div>
           )}
 
-          {allChats.length > 0 &&
-            allChats.map((chat: ChatMeta) => {
-              const unread = unreadCounts.get(chat.id) ?? 0;
-              return (
-                <div
-                  key={chat.id}
-                  className={twMerge(
-                    "py-3 px-4 bg-lightBg dark:bg-darkBg shadow-sm rounded-md flex justify-between cursor-pointer duration-500 text-lightText dark:text-darkText ease-in-out hover:bg-lightPrimary dark:hover:bg-darkPrimary hover:text-white",
-                    id == String(chat.id) &&
-                      "bg-lightPrimary dark:bg-darkPrimary text-white",
-                  )}
-                  onClick={() => selectChat(chat.id)}
-                >
-                  <div className="flex gap-3 items-center">
-                    <img
-                      src={avatarImg}
-                      alt="Avatar"
-                      className="h-10 w-10 rounded-full object-cover"
-                    />
-                    <div className="flex flex-col gap-1.5">
-                      <h3 className="text-sm font-semibold">{chat.name}</h3>
-                      <small className="text-[11px] line-clamp-1 opacity-80 font-medium">
-                        {chat.lastMessage?.content || "No messages yet!"}
-                      </small>
-                    </div>
-                  </div>
-                  <div className="flex flex-col  items-end shrink-0 gap-1">
-                    <small className="text-xs font-medium opacity-80">
-                      {formatMessageTime(
-                        chat.lastMessage?.createdAt || chat.updatedAt,
-                      )}
-                    </small>
-                    {unread > 0 && (
-                      <span className="bg-lightPrimary dark:bg-darkPrimary text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">
-                        {unread > 99 ? "99+" : unread}
-                      </span>
-                    )}
-                  </div>
+          {allChats.map((chat: ChatMeta) => (
+            <div
+              key={chat.id}
+              className={twMerge(
+                "py-3 px-4 bg-lightBg dark:bg-darkBg shadow-sm rounded-md flex justify-between cursor-pointer duration-500 text-lightText dark:text-darkText ease-in-out hover:bg-lightPrimary dark:hover:bg-darkPrimary hover:text-white",
+                id == String(chat.id) &&
+                  "bg-lightPrimary dark:bg-darkPrimary text-white",
+              )}
+              onClick={() => selectChat(chat.id)}
+            >
+              <div className="flex gap-3 items-center">
+                <img
+                  src={avatarImg}
+                  alt="Avatar"
+                  className="h-10 w-10 rounded-full object-cover"
+                />
+                <div className="flex flex-col gap-1.5">
+                  <h3 className="text-sm font-semibold">{chat.name}</h3>
+                  <small className="text-[11px] line-clamp-1 opacity-80 font-medium">
+                    {chat.lastMessage?.content || "No messages yet!"}
+                  </small>
                 </div>
-              );
-            })}
+              </div>
+              <div className="flex flex-col items-end shrink-0 gap-1">
+                <small className="text-xs font-medium opacity-80">
+                  {formatMessageTime(
+                    chat.lastMessage?.createdAt || chat.updatedAt,
+                  )}
+                </small>
+                {chat.unreadCount > 0 && (
+                  <span className="bg-lightPrimary dark:bg-darkPrimary text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">
+                    {chat.unreadCount > 99 ? "99+" : chat.unreadCount}
+                  </span>
+                )}
+              </div>
+            </div>
+          ))}
 
           {isFetchingNextPage && (
             <div className="flex justify-center py-2">

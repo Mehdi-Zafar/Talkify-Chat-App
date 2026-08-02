@@ -31,8 +31,6 @@ export const isMember = (chatId: number, userId: number) =>
     where: { chat_id_user_id: { chat_id: chatId, user_id: userId } },
   });
 
-// Returns all user IDs that belong to a chat — used by socket handler
-// to know which user rooms to emit RECEIVE_MSG to.
 export const getMemberIds = async (chatId: number): Promise<number[]> => {
   const rows = await prisma.chat_members.findMany({
     where: { chat_id: chatId },
@@ -40,6 +38,15 @@ export const getMemberIds = async (chatId: number): Promise<number[]> => {
   });
   return rows.map((r) => r.user_id);
 };
+
+// Sets last_read_at = now() for the given user in the given chat.
+// Called when a user opens a chat — all messages before this point
+// are considered read, so unread count resets to 0 on next login.
+export const updateLastReadAt = (chatId: number, userId: number) =>
+  prisma.chat_members.update({
+    where: { chat_id_user_id: { chat_id: chatId, user_id: userId } },
+    data: { last_read_at: new Date() },
+  });
 
 export const findManyByUserId = (userId: number, page: number, limit: number) =>
   Promise.all([
@@ -94,6 +101,25 @@ export const findLastMessagesByChatIds = (chatIds: number[]) =>
     FROM messages
     WHERE chat_id = ANY(${chatIds}::int[])
     ORDER BY chat_id, "createdAt" DESC
+  `);
+
+// Returns unread message counts for a batch of chats for a given user.
+// Unread = messages created after the user's last_read_at for that chat.
+// Single query across all chat IDs — no N+1.
+export const findUnreadCountsByChatIds = (chatIds: number[], userId: number) =>
+  prisma.$queryRaw<{ chat_id: number; unread_count: bigint }[]>(Prisma.sql`
+    SELECT
+      m.chat_id,
+      COUNT(*) AS unread_count
+    FROM messages m
+    JOIN chat_members cm
+      ON cm.chat_id = m.chat_id
+      AND cm.user_id = ${userId}
+    WHERE
+      m.chat_id = ANY(${chatIds}::int[])
+      AND m.sender_id != ${userId}
+      AND m."createdAt" > cm.last_read_at
+    GROUP BY m.chat_id
   `);
 
 export const insert = (data: CreateChatBody, creatorId: number) =>
