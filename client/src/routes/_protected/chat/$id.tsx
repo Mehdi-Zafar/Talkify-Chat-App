@@ -7,7 +7,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { useInfiniteQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { ChatAPI } from "@/api";
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useSocketStore, useUserStore, useChatStore } from "@/zustand";
@@ -36,7 +36,7 @@ function ChatDisplay() {
   const socket = useSocketStore((state) => state.socket);
 
   // Read chat metadata directly from TanStack cache — no Zustand needed
-  const chatMeta = user ? getChatFromCache(user.id, chatId) : undefined;
+  const chatMetaCache = user ? getChatFromCache(user.id, chatId) : undefined;
 
   const [newMsg, setNewMsg] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
@@ -58,6 +58,14 @@ function ChatDisplay() {
       initialPageParam: 1,
       enabled: !!chatId && !isNaN(chatId),
     });
+
+  const { data: fetchedChatMeta } = useQuery({
+    queryKey: ["chatMeta", chatId],
+    queryFn: () => ChatAPI.getChatMeta(chatId),
+    enabled: !chatMetaCache && !!chatId,
+  });
+
+  const chatMeta = chatMetaCache ?? fetchedChatMeta;
 
   // Seed local messages from the first page
   useEffect(() => {
