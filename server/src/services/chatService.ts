@@ -32,7 +32,6 @@ export const getChatById = async (chatId: number, userId: number) => {
   const chat = await ChatRepository.findWithMessages(chatId);
   if (!chat) throw new AppError(404, "Chat not found");
 
-  // Check membership directly from joined data — no extra query
   const isMember = chat.members.some((m) => m.user_id === userId);
   if (!isMember) throw new AppError(403, "You are not a member of this chat");
 
@@ -41,7 +40,6 @@ export const getChatById = async (chatId: number, userId: number) => {
     name: chat.name,
     isGroupChat: chat.isGroupChat,
     creatorId: chat.creator_id,
-    // Member details already joined — just extract from the relation
     members: chat.members.map((m) => ({
       id: m.user.id,
       user_name: m.user.user_name,
@@ -119,18 +117,26 @@ export const getChatsByUserId = async (
   }
 
   const chatIds = chats.map((c) => c.id);
-  const lastMessages = await ChatRepository.findLastMessagesByChatIds(chatIds);
+
+  // Both queries run in parallel — no sequential waiting
+  const [lastMessages, unreadRows] = await Promise.all([
+    ChatRepository.findLastMessagesByChatIds(chatIds),
+    ChatRepository.findUnreadCountsByChatIds(chatIds, userId),
+  ]);
+
   const lastMessageMap = new Map(lastMessages.map((m) => [m.chat_id, m]));
+  // $queryRaw returns bigint for COUNT — convert to number
+  const unreadMap = new Map(
+    unreadRows.map((r) => [r.chat_id, Number(r.unread_count)]),
+  );
 
   const items = chats.map((chat) => {
-    // Extract member details from the joined relation
     const memberDetails = chat.members.map((m) => ({
       id: m.user.id,
       user_name: m.user.user_name,
       image: m.user.image,
     }));
 
-    // DM name derived from the other participant when chat has no name
     let name = chat.name;
     if (!chat.isGroupChat && !name) {
       const other = memberDetails.find((m) => m.id !== userId);
@@ -146,7 +152,7 @@ export const getChatsByUserId = async (
       creator_id: chat.creator_id,
       createdAt: chat.createdAt,
       updatedAt: chat.updatedAt,
-      memberDetails, // user details only — no raw chat_members rows
+      memberDetails,
       lastMessage: lastMessage
         ? {
             content: lastMessage.content,
@@ -154,6 +160,7 @@ export const getChatsByUserId = async (
             isOwn: lastMessage.sender_id === userId,
           }
         : null,
+      unreadCount: unreadMap.get(chat.id) ?? 0,
     };
   });
 
@@ -184,6 +191,13 @@ export const deleteChat = async (chatId: number, requesterId: number) => {
   if (chat.creator_id !== requesterId)
     throw new AppError(403, "Only the chat creator can delete it");
   await ChatRepository.deleteById(chatId);
+};
+
+// Sets last_read_at = now() — resets persistent unread count for this user in this chat
+export const markAsRead = async (chatId: number, userId: number) => {
+  const membership = await ChatRepository.isMember(chatId, userId);
+  if (!membership) throw new AppError(403, "You are not a member of this chat");
+  await ChatRepository.updateLastReadAt(chatId, userId);
 };
 
 export const getChatMeta = async (chatId: number, requesterId: number) => {
