@@ -83,16 +83,19 @@ export const findByRelation = (
     ? { user_name: { contains: search, mode: "insensitive" as const } }
     : {};
 
+  // A contact is someone with whom a private (1-on-1) chat exists
+  const privateChatWithUser = {
+    chat: {
+      isGroupChat: false,
+      members: { some: { user_id: userId } },
+    },
+  };
+
   if (relationType === UserRelationType.CONTACT) {
     return prisma.users.findMany({
       where: {
         id: { not: userId },
-        // User shares at least one chat with userId via chat_members
-        chats: {
-          some: {
-            chat: { members: { some: { user_id: userId } } },
-          },
-        },
+        chats: { some: privateChatWithUser },
         ...nameFilter,
       },
       select: { id: true, user_name: true, image: true },
@@ -103,13 +106,7 @@ export const findByRelation = (
     return prisma.users.findMany({
       where: {
         id: { not: userId },
-        NOT: {
-          chats: {
-            some: {
-              chat: { members: { some: { user_id: userId } } },
-            },
-          },
-        },
+        NOT: { chats: { some: privateChatWithUser } },
         ...nameFilter,
       },
       select: { id: true, user_name: true, image: true },
