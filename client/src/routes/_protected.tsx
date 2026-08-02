@@ -1,5 +1,7 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
+import { useEffect } from "react";
 import { Header } from "../components";
+import { useSocketStore } from "@/zustand";
 
 export const Route = createFileRoute("/_protected")({
   beforeLoad: ({ context }) => {
@@ -12,6 +14,12 @@ export const Route = createFileRoute("/_protected")({
 });
 
 function ProtectedLayout() {
+  const socketConnect = useSocketStore((state) => state.connect);
+
+  useEffect(() => {
+    socketConnect();
+  }, []);
+
   return (
     <div className="flex shrink-0 h-screen overflow-clip">
       <Header />
