@@ -2,6 +2,12 @@ import { Prisma } from "@prisma/client";
 import prisma from "../lib/prisma";
 import { CreateChatBody, UpdateChatBody } from "../types/requests";
 
+type InsertChatPayload = {
+  name: string;
+  isGroupChat: boolean;
+  members: number[];
+};
+
 export const findById = (id: number) =>
   prisma.chats.findUnique({ where: { id } });
 
@@ -122,7 +128,7 @@ export const findUnreadCountsByChatIds = (chatIds: number[], userId: number) =>
     GROUP BY m.chat_id
   `);
 
-export const insert = (data: CreateChatBody, creatorId: number) =>
+export const insert = (data: InsertChatPayload, creatorId: number) =>
   prisma.chats.create({
     data: {
       name: data.name ?? "",

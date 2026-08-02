@@ -4,11 +4,22 @@ import * as MessageRepository from "../repositories/messageRepository";
 import { CreateChatBody, UpdateChatBody } from "../types/requests";
 
 export const createChat = async (data: CreateChatBody, creatorId: number) => {
-  const members = data.members.includes(creatorId)
-    ? data.members
-    : [...data.members, creatorId];
+  if (data.isGroupChat === true) {
+    const members = data.members.includes(creatorId)
+      ? data.members
+      : [...data.members, creatorId];
+    return ChatRepository.insert(
+      { name: data.name, isGroupChat: true, members },
+      creatorId,
+    );
+  }
 
-  return ChatRepository.insert({ ...data, members }, creatorId);
+  if (data.isGroupChat === false) {
+    return ChatRepository.insert(
+      { name: "", isGroupChat: false, members: [data.member_id, creatorId] },
+      creatorId,
+    );
+  }
 };
 
 export const getChats = async (userId: number, page: number, limit: number) => {
