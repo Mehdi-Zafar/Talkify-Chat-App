@@ -7,11 +7,16 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import SearchInput from "../SearchInput/SearchInput";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { UsersAPI } from "../../api";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { ChatAPI, UsersAPI } from "../../api";
 import maleAvatar from "../../assets/male-avatar.jpg";
 import { useUserStore } from "../../zustand";
-import { Chat, User, UserRelationType } from "@/utils/contracts";
+import {
+  Chat,
+  CreateChatRequest,
+  User,
+  UserRelationType,
+} from "@/utils/contracts";
 import { ChangeEvent, useState } from "react";
 import { twMerge } from "tailwind-merge";
 import { useNavigate } from "@tanstack/react-router";
@@ -24,38 +29,27 @@ export default function NewChatModal({ openModal, handleOpen }) {
   const search = useDebounce(searchKeyword, 500);
   const { data: users, isFetching } = useQuery({
     queryKey: ["users", search],
-    queryFn: getUsers,
+    queryFn: () =>
+      UsersAPI.getChatUsers(user?.id, UserRelationType.NON_CONTACT, search),
     enabled: openModal,
   });
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  async function getUsers() {
-    try {
-      const res = await UsersAPI.getChatUsers(
-        user?.id,
-        UserRelationType.NON_CONTACT,
-        search,
-      );
-      return res.data;
-    } catch (err) {
-      console.error(err);
-      return [];
-    }
-  }
+  const { mutateAsync, isPending } = useMutation({
+    mutationFn: (payload: CreateChatRequest) => ChatAPI.createChat(payload),
+    onSuccess: (newChat) => {
+      queryClient.invalidateQueries({ queryKey: ["chats", user?.id] });
+      navigate({ to: `/chat/${newChat.id}` });
+      handleOpen();
+    },
+  });
 
   function handleNewChat() {
-    const newChat = new Chat();
-    newChat.members = [user?.id, selectedUser?.id];
-    newChat.creator_id = user?.id;
-    newChat.isGroupChat = false;
-    newChat.name = selectedUser?.user_name;
-    queryClient.setQueryData(["chats", user?.id], (oldChatsData: any) => {
-      if (!oldChatsData) return oldChatsData;
-      return [newChat, ...oldChatsData];
-    });
-    navigate({ to: `/chat/new?userId=${selectedUser?.id}` });
-    handleOpen();
+    if (!selectedUser) return;
+    const payload = new CreateChatRequest();
+    payload.member_id = selectedUser.id;
+    mutateAsync(payload);
   }
 
   return (
@@ -117,7 +111,12 @@ export default function NewChatModal({ openModal, handleOpen }) {
             <Button variant="ghost" type="button" onClick={handleOpen}>
               Cancel
             </Button>
-            <Button disabled={!selectedUser?.id} onClick={handleNewChat}>
+            <Button
+              type="button"
+              disabled={!selectedUser}
+              loading={isPending}
+              onClick={handleNewChat}
+            >
               Confirm
             </Button>
           </DialogFooter>

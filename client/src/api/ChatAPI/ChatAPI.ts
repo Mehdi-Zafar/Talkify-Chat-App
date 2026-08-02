@@ -1,9 +1,23 @@
-import { Chat } from "../../utils/contracts";
+import {
+  CreateChatRequest,
+  CreateGroupChatRequest,
+} from "../../utils/contracts";
 import httpClient from "../httpClient";
 
 const BASE_URL = "/chats";
 
-export const createGroupChat = async (chat: Chat) => {
+export const createGroupChat = async (chat: CreateGroupChatRequest) => {
+  try {
+    const res = await httpClient.post(`${BASE_URL}`, chat, {
+      headers: { "hide-toast": true },
+    });
+    return res.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const createChat = async (chat: CreateChatRequest) => {
   try {
     const res = await httpClient.post(`${BASE_URL}`, chat, {
       headers: { "hide-toast": true },

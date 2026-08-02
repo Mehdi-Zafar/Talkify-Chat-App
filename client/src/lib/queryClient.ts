@@ -84,3 +84,27 @@ export default queryClient;
 export function invalidateMessagesQuery(chatId: number) {
   queryClient.invalidateQueries({ queryKey: ["messages", chatId] });
 }
+
+type MessagesPage = { items: Message[]; page: number; totalPages: number };
+type MessagesCache = InfiniteData<MessagesPage>;
+
+export function addMessageToCache(chatId: number, message: Message) {
+  queryClient.setQueryData<MessagesCache>(["messages", chatId], (old) => {
+    if (!old) return old;
+
+    const alreadyExists = old.pages.some((page) =>
+      page.items.some(
+        (m) => m.id === message.id && m.chat_id === message.chat_id,
+      ),
+    );
+
+    if (alreadyExists) return old;
+
+    return {
+      ...old,
+      pages: old.pages.map((page, index) =>
+        index === 0 ? { ...page, items: [message, ...page.items] } : page,
+      ),
+    };
+  });
+}

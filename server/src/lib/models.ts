@@ -22,6 +22,7 @@ export enum SocketEvent {
   SEND_MSG = "sendMsg",
   RECEIVE_MSG = "receiveMsg",
   CONNECT_ERROR = "connectError",
+  MSG_SENT = "msg_sent",
 }
 
 export type PublicUser = Prisma.usersGetPayload<{

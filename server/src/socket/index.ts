@@ -64,6 +64,11 @@ export const registerSocketHandlers = (io: Server) => {
             sender: data.sender,
           });
         }
+
+        socket.emit(SocketEvent.MSG_SENT, {
+          ...saved,
+          sender: data.sender,
+        });
       } catch (error) {
         console.error("Failed to save message:", error);
         socket.emit("error", { message: "Failed to send message" });

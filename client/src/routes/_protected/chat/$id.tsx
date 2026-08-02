@@ -7,7 +7,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { useInfiniteQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { ChatAPI } from "@/api";
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useSocketStore, useUserStore, useChatStore } from "@/zustand";
@@ -17,6 +17,7 @@ import {
   updateLastMessageInCache,
   clearUnreadInCache,
   getChatFromCache,
+  addMessageToCache,
 } from "@/lib/queryClient";
 import { EllipsisVerticalIcon } from "lucide-react";
 
@@ -35,7 +36,7 @@ function ChatDisplay() {
   const socket = useSocketStore((state) => state.socket);
 
   // Read chat metadata directly from TanStack cache — no Zustand needed
-  const chatMeta = user ? getChatFromCache(user.id, chatId) : undefined;
+  const chatMetaCache = user ? getChatFromCache(user.id, chatId) : undefined;
 
   const [newMsg, setNewMsg] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
@@ -57,6 +58,14 @@ function ChatDisplay() {
       initialPageParam: 1,
       enabled: !!chatId && !isNaN(chatId),
     });
+
+  const { data: fetchedChatMeta } = useQuery({
+    queryKey: ["chatMeta", chatId],
+    queryFn: () => ChatAPI.getChatMeta(chatId),
+    enabled: !chatMetaCache && !!chatId,
+  });
+
+  const chatMeta = chatMetaCache ?? fetchedChatMeta;
 
   // Seed local messages from the first page
   useEffect(() => {
@@ -149,7 +158,6 @@ function ChatDisplay() {
     if (!socket) return;
 
     const handleNewMessage = (message: Message) => {
-      debugger;
       if (message.chat_id !== chatId) return;
 
       setMessages((prev) => [...prev, message]);
@@ -170,9 +178,21 @@ function ChatDisplay() {
       });
     };
 
+    const handleMsgSent = (message: Message) => {
+      if (message.chat_id !== chatId) return;
+
+      setMessages((prev) =>
+        prev.map((m) => (!m.id && m.chat_id === message.chat_id ? message : m)),
+      );
+
+      addMessageToCache(chatId, message);
+    };
+
     socket.on(SocketEvent.RECEIVE_MSG, handleNewMessage);
+    socket.on(SocketEvent.MSG_SENT, handleMsgSent);
     return () => {
       socket.off(SocketEvent.RECEIVE_MSG, handleNewMessage);
+      socket.on(SocketEvent.MSG_SENT, handleMsgSent);
     };
   }, [socket, chatId]);
 
