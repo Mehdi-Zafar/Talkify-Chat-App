@@ -87,3 +87,17 @@ export enum SocketEvent {
   RECEIVE_MSG = "receiveMsg",
   CONNECT_ERROR = "connectError",
 }
+
+export interface ChatMeta {
+  id: number;
+  name: string;
+  isGroupChat: boolean;
+  memberDetails: { id: number; user_name: string; image: string }[];
+  lastMessage: {
+    content: string;
+    createdAt: string;
+    isOwn: boolean;
+  } | null;
+  updatedAt: string;
+  unreadCount: number;
+}

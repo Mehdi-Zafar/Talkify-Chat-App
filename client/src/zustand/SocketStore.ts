@@ -4,6 +4,11 @@ import useAuthStore from "./AuthStore";
 import { Message, SocketEvent } from "@/utils/contracts";
 import useChatStore from "./ChatStore";
 import useUserStore from "./UserStore";
+import {
+  updateLastMessageInCache,
+  incrementUnreadInCache,
+  invalidateMessagesQuery,
+} from "@/lib/queryClient";
 
 type SocketState = {
   socket: Socket | null;
@@ -27,13 +32,11 @@ const useSocketStore = create<SocketState>((set, get) => ({
     const authToken = useAuthStore.getState().accessToken;
 
     try {
-      const socketOptions = {
+      const newSocket = io(url, {
         autoConnect: true,
         withCredentials: true,
         ...(authToken && { auth: { token: authToken } }),
-      };
-
-      const newSocket = io(url, socketOptions);
+      });
 
       newSocket.on(SocketEvent.CONNECT, () => {
         set({ isConnected: true, error: null });
@@ -43,13 +46,18 @@ const useSocketStore = create<SocketState>((set, get) => ({
         set({ isConnected: false });
       });
 
-      newSocket.on(SocketEvent.CONNECT_ERROR, (err) => {
-        set({ error: new Error(`Connection error: ${err.message}`) });
-      });
-
       newSocket.on(SocketEvent.RECEIVE_MSG, (message: Message) => {
-        const currentUserId = useUserStore.getState().user?.id;
-        useChatStore.getState().updateLastMessage(message, currentUserId);
+        const currentUser = useUserStore.getState().user;
+        if (!currentUser) return;
+
+        const activeChatId = useChatStore.getState().activeChatId;
+
+        updateLastMessageInCache(currentUser.id, message, currentUser.id);
+
+        if (message.chat_id !== activeChatId) {
+          incrementUnreadInCache(currentUser.id, message.chat_id);
+          invalidateMessagesQuery(message.chat_id);
+        }
       });
 
       newSocket.on("connect_error", async (err) => {
