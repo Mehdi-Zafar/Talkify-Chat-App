@@ -108,3 +108,7 @@ export function addMessageToCache(chatId: number, message: Message) {
     };
   });
 }
+
+export function clearCache() {
+  queryClient.clear();
+}

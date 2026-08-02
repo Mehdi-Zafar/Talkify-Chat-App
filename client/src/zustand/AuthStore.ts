@@ -2,8 +2,8 @@ import { create } from "zustand";
 import { AuthCredentials } from "../utils/contracts";
 import { AuthAPI } from "../api";
 import useUserStore from "./UserStore";
-import useChatStore from "./ChatStore";
 import useSocketStore from "./SocketStore";
+import { clearCache } from "@/lib/queryClient";
 interface AuthStore {
   accessToken: string | null;
   isLoggedIn: boolean;
@@ -68,7 +68,7 @@ const useAuthStore = create<AuthStore>((set, get) => ({
         isLoggedIn: false,
       });
       useUserStore.setState({ user: null });
-      useChatStore.getState().clearChats();
+      clearCache();
       useSocketStore.getState().disconnect();
     } catch (error) {
       throw error;
