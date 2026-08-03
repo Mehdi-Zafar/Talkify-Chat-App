@@ -64,7 +64,7 @@ function Profile() {
 
   async function onSubmit(data) {
     try {
-      await UsersAPI.updateUserData(data, user?.id);
+      // await UsersAPI.updateUserData(data, user?.id);
       if (data.image instanceof File) {
         const formData = new FormData();
         formData.append("image", data.image);
