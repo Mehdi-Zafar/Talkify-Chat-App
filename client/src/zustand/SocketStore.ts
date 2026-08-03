@@ -8,6 +8,7 @@ import {
   updateLastMessageInCache,
   incrementUnreadInCache,
   invalidateMessagesQuery,
+  addMessageToCache,
 } from "@/lib/queryClient";
 
 type SocketState = {
@@ -58,6 +59,13 @@ const useSocketStore = create<SocketState>((set, get) => ({
           incrementUnreadInCache(currentUser.id, message.chat_id);
           invalidateMessagesQuery(message.chat_id);
         }
+      });
+
+      newSocket.on(SocketEvent.MSG_SENT, (message: Message) => {
+        const currentUser = useUserStore.getState().user;
+        if (!currentUser) return;
+
+        addMessageToCache(message.chat_id, message);
       });
 
       newSocket.on("connect_error", async (err) => {
