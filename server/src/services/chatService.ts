@@ -218,9 +218,15 @@ export const getChatMeta = async (chatId: number, requesterId: number) => {
   const chat = await ChatRepository.findMetaById(chatId);
   if (!chat) throw new AppError(404, "Chat not found");
 
+  let name = chat.name;
+  if (!chat.isGroupChat && !name) {
+    const other = chat.members.find((m) => m.user.id !== requesterId);
+    name = other?.user.user_name ?? "Chat";
+  }
+
   return {
     id: chat.id,
-    name: chat.name,
+    name,
     isGroupChat: chat.isGroupChat,
     creator_id: chat.creator_id,
     createdAt: chat.createdAt,
